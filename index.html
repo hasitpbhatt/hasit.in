@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <script>
+    (function() {
+      try {
+        var storageTheme = localStorage.getItem('theme');
+        if (storageTheme === 'dark') {
+          document.documentElement.classList.add('dark-theme');
+          return;
+        } else if (storageTheme === 'light') {
+          document.documentElement.classList.add('light-theme');
+          return;
+        }
+      } catch (e) {}
+      if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.documentElement.classList.add('dark-theme');
+      } else {
+        document.documentElement.classList.add('light-theme');
+      }
+    })();
+  </script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hasit Bhatt — Observer · Thinker · Builder</title>
+  <meta name="description" content="Hasit Bhatt builds conversational AI and support automations at Uber. Observer of systems, lover of keyboards (code & piano), collector of words.">
+  <meta property="og:title" content="Hasit Bhatt — Observer · Thinker · Builder">
+  <meta property="og:description" content="Observer of systems, lover of keyboards (code & piano), builder at Uber.">
+  <meta property="og:image" content="https://hasit.in/og-image.jpg">
+  <meta property="og:url" content="https://hasit.in/">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary_large_image">
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7046934020222763" crossorigin="anonymous"></script>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a href="#main" class="skip-link">Skip to content</a>
+
+  <nav class="nav" role="navigation" aria-label="Main navigation">
+    <div class="nav-inner">
+      <a href="#" class="nav-logo" aria-label="Home">HB</a>
+      <div class="nav-links">
+        <a href="#about" class="nav-link">About</a>
+        <a href="#work" class="nav-link">Work</a>
+        <a href="#projects" class="nav-link">Projects</a>
+        <a href="#musings" class="nav-link">Musings</a>
+        <a href="#connect" class="nav-link">Connect</a>
+        <button id="theme-toggle" type="button" class="nav-link" aria-label="Toggle theme" style="background: none; border: none; cursor: pointer; padding: 0 0 0 8px; display: flex; align-items: center; justify-content: center;">
+          <svg class="sun-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 18px; height: 18px; display: none;"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+          <svg class="moon-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 18px; height: 18px; display: none;"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero" id="top" style="position: relative;">
+    <canvas id="particles-canvas"></canvas>
+    <div class="hero-monogram" aria-hidden="true">HB</div>
+    <div class="hero-content">
+      <h1>Hasit Bhatt</h1>
+      <p class="tagline" id="tagline">
+        <span class="tagline-word">Observer</span>
+        <span class="tagline-sep">·</span>
+        <span class="tagline-word">Thinker</span>
+        <span class="tagline-sep">·</span>
+        <span class="tagline-word">Builder</span>
+      </p>
+      <div class="hero-actions">
+        <a href="https://blog.hasit.in" class="btn btn-primary">Read My Thoughts →</a>
+        <a href="https://quiz.hasit.in" class="btn btn-secondary">Try Interactive Quizzes</a>
+      </div>
+    </div>
+  </header>
+
+  <main id="main">
+    <section id="about" class="reveal">
+      <div class="container-narrow">
+        <div class="section-header">
+          <h2>About</h2>
+<!-- No server-side headers needed -->  <p class="section-subtitle">Systems observer, keyboard lover, and builder at heart.</p>
+        </div>
+        <p class="about-text">I observe systems, love making keyboards sing (whether coding or playing piano), think deeply about how things work, and find joy in poetry, stories, and meaningful quotes. Professionally, I build at Uber — previously in fintech, now focused on conversational AI and support automations.</p>
+        <div class="about-meta">
+          <div class="about-meta-item">
+            <span class="about-meta-label">Currently</span>
+            <span class="about-meta-value">Staff Engineer @ Uber</span>
+          </div>
+          <div class="about-meta-item">
+            <span class="about-meta-label">Previously</span>
+            <span class="about-meta-value">Research @ IIT Madras</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="work" class="reveal">
+      <div class="container-narrow">
+        <div class="section-header">
+          <h2>Work & Craft</h2>
+          <p class="section-subtitle">What I do and what I love working with.</p>
+        </div>
+
+        <div class="timeline">
+          <div class="timeline-item">
+            <div class="timeline-dot"></div>
+            <div class="timeline-content">
+              <p class="timeline-org">Uber</p>
+              <p class="timeline-role">Staff Software Engineer</p>
+              <p class="timeline-desc">Currently focused on conversational AI and support automations. Previously architecting internet-scale financial tech and automated audit frameworks.</p>
+            </div>
+          </div>
+          <div class="timeline-item">
+            <div class="timeline-dot"></div>
+            <div class="timeline-content">
+              <p class="timeline-org">IIT Madras</p>
+              <p class="timeline-role">Research / Teaching Assistant</p>
+              <p class="timeline-desc">Explored Data Mining, Graph Mining, Algorithms, and Machine Learning while guiding bright young minds.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="skills-section">
+          <h3>Areas of focus</h3>
+          <div class="skill-group">
+            <div class="skill-tags">
+              <span class="skill-tag">GenAI Orchestration</span>
+              <span class="skill-tag">LangChain</span>
+              <span class="skill-tag">LLM Integrations</span>
+              <span class="skill-tag">Conversational AI</span>
+              <span class="skill-tag">Support Automations</span>
+              <span class="skill-tag">Data Mining</span>
+              <span class="skill-tag">Graph Databases</span>
+            </div>
+          </div>
+          <div class="skill-group">
+            <div class="skill-tags">
+              <span class="skill-tag">Go (Golang)</span>
+              <span class="skill-tag">Java</span>
+              <span class="skill-tag">Python</span>
+              <span class="skill-tag">C++</span>
+              <span class="skill-tag">SQL</span>
+              <span class="skill-tag">Distributed Systems</span>
+              <span class="skill-tag">Scalable Microservices</span>
+              <span class="skill-tag">Event-Driven Architectures</span>
+            </div>
+          </div>
+          <div class="skill-group">
+            <div class="skill-tags">
+              <span class="skill-tag">Piano & Keyboards</span>
+              <span class="skill-tag">Poetry & Stories</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="projects" class="reveal">
+      <div class="container">
+        <div class="section-header" style="text-align: center;">
+          <h2>Things I've Built</h2>
+          <p class="section-subtitle" style="margin-left: auto; margin-right: auto;">Side projects, experiments, and things that scratch an itch.</p>
+        </div>
+        <div class="projects-grid">
+          <div class="project-card" onclick="window.location.href='https://quiz.hasit.in'">
+            <div class="project-icon" aria-hidden="true">📚</div>
+            <h3>Quiz Platform</h3>
+            <p>My playful take on learning: multiple choice, timed quizzes on non-fiction books designed to feel like you've absorbed the knowledge without the time commitment.</p>
+            <a href="https://quiz.hasit.in" class="project-link" onclick="event.stopPropagation()">Try It Out →</a>
+          </div>
+
+          <div class="project-card" onclick="window.open('https://instagram.com/hasit_bhatt', '_blank')">
+            <div class="project-icon" aria-hidden="true">📝</div>
+            <h3>Quotes & Poetry</h3>
+            <p>Words that make me pause — a collection of poetry, thoughtful quotes, and quiet musings on Instagram.</p>
+            <a href="https://instagram.com/hasit_bhatt" class="project-link" target="_blank" onclick="event.stopPropagation()">Follow @hasit_bhatt →</a>
+          </div>
+
+          <div class="project-card" onclick="window.open('https://hasitpbhatt.medium.com/', '_blank')">
+            <div class="project-icon" aria-hidden="true">✍️</div>
+            <h3>Writing & Reflection</h3>
+            <p>Where I share thoughts on software engineering history, system design, and the occasional poem or story that caught my attention.</p>
+            <a href="https://hasitpbhatt.medium.com/" class="project-link" target="_blank" onclick="event.stopPropagation()">Read My Thoughts →</a>
+          </div>
+
+          <div class="project-card" onclick="window.location.href='https://airgap.hasit.in'">
+            <div class="project-icon" aria-hidden="true">🛡️</div>
+            <h3>airgap</h3>
+            <p>A personal AI agent that runs entirely in your browser. No servers, no signup. Bring your own API key, browse the web, fetch RSS, remember facts, and branch conversations — all local, all private.</p>
+            <a href="https://airgap.hasit.in" class="project-link" onclick="event.stopPropagation()">Try airgap →</a>
+          </div>
+
+          <div class="project-card" onclick="window.location.href='https://quizify.hasit.in'">
+            <div class="project-icon" aria-hidden="true">⚡</div>
+            <h3>Quizify</h3>
+            <p>Learn anything from a URL. Paste any article, book, or webpage and get instant interactive AI-generated quizzes — effortless learning from any content.</p>
+            <a href="https://quizify.hasit.in" class="project-link" onclick="event.stopPropagation()">Try Quizify →</a>
+          </div>
+
+          <div class="project-card" onclick="window.location.href='https://devcheap.click'">
+            <div class="project-icon" aria-hidden="true">💰</div>
+            <h3>DevCheap</h3>
+            <p>Curated developer deals — 179+ verified offers across hosting, APIs, AI, databases, and dev tools. Free credits, trials, and lifetime discounts refreshed weekly.</p>
+            <div style="display: flex; gap: 0.5rem; margin-top: auto;">
+              <a href="https://devcheap.click" class="project-link" onclick="event.stopPropagation()">Browse Deals →</a>
+              <a href="https://github.com/hasitpbhatt/devcheap" class="project-link" onclick="event.stopPropagation()" target="_blank">Contribute on GitHub →</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="musings" class="reveal">
+      <div class="container-narrow">
+        <div class="section-header">
+          <h2>Musings</h2>
+          <p class="section-subtitle">Observations about technology, occasional poetry, and quotes that make me pause.</p>
+        </div>
+        <p class="musings-text">This is my digital commonplace book — where I put down thoughts on software engineering, system design, and the quiet beauty of a well-crafted sentence. Think of it as a slower corner of the internet.</p>
+        <a href="https://blog.hasit.in" class="btn btn-primary">Visit My Blog →</a>
+      </div>
+    </section>
+
+    <section id="connect" class="reveal">
+      <div class="container-narrow">
+        <div class="section-header">
+          <h2>Connect</h2>
+          <p class="section-subtitle">Find me across the web.</p>
+        </div>
+        <div class="connect-grid">
+          <a href="https://github.com/hasitpbhatt" class="connect-link" target="_blank" aria-label="GitHub">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+            GitHub
+          </a>
+          <a href="https://linkedin.com/in/hasitpbhatt" class="connect-link" target="_blank" aria-label="LinkedIn">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+            LinkedIn
+          </a>
+          <a href="https://hasitpbhatt.medium.com/" class="connect-link" target="_blank" aria-label="Medium">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M0 0v24h24V0H0zm19.938 5.686L18.651 6.92a.376.376 0 00-.143.362v9.067a.376.376 0 00.143.361l1.257 1.234v.271h-6.322v-.27l1.302-1.264c.128-.128.128-.165.128-.36V8.99l-3.62 9.195h-.49L6.69 8.99v6.163a.85.85 0 00.233.707l1.694 2.054v.271H3.815v-.27l1.694-2.054a.82.82 0 00.218-.707V8.027a.624.624 0 00-.203-.526L4.025 5.686v-.27h4.574l3.536 7.759 3.11-7.759H19.94v.27z"/></svg>
+            Medium
+          </a>
+          <a href="https://instagram.com/hasit_bhatt" class="connect-link" target="_blank" aria-label="Instagram">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
+            Instagram
+          </a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="container-narrow">
+      <a href="#top" class="back-to-top">Back to top ↑</a>
+      <p class="footer-copyright">© <span id="year"></span> Hasit Bhatt. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script>
+    // Year
+    document.getElementById('year').textContent = new Date().getFullYear();
+
+    // Particles
+    (function() {
+      var canvas = document.getElementById('particles-canvas');
+      if (!canvas) return;
+      var ctx = canvas.getContext('2d');
+      var particles = [];
+      var animId;
+      var w, h;
+
+      function resize() {
+        w = canvas.parentElement.offsetWidth;
+        h = canvas.parentElement.offsetHeight;
+        canvas.width = w;
+        canvas.height = h;
+      }
+      resize();
+      window.addEventListener('resize', resize);
+
+      function Particle() {
+        this.x = Math.random() * w;
+        this.y = Math.random() * h;
+        this.size = Math.random() * 1.5 + 0.5;
+        this.speedY = -(Math.random() * 0.15 + 0.05);
+        this.opacity = Math.random() * 0.2 + 0.05;
+      }
+      Particle.prototype.update = function() {
+        this.y += this.speedY;
+        if (this.y < -10) { this.y = h + 10; this.x = Math.random() * w; }
+      };
+      Particle.prototype.draw = function() {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(255, 255, 255, ' + this.opacity + ')';
+        ctx.fill();
+      };
+
+      var count = Math.min(Math.floor(w * 0.03), 35);
+      for (var i = 0; i < count; i++) particles.push(new Particle());
+
+      function animate() {
+        ctx.clearRect(0, 0, w, h);
+        for (var i = 0; i < particles.length; i++) {
+          particles[i].update();
+          particles[i].draw();
+        }
+        animId = requestAnimationFrame(animate);
+      }
+      animate();
+    })();
+
+    // Hero stagger
+    (function() {
+      var tagline = document.getElementById('tagline');
+      if (tagline) {
+        setTimeout(function() { tagline.classList.add('loaded'); }, 300);
+        setTimeout(function() {
+          document.querySelector('.hero').classList.add('loaded');
+        }, 400);
+      }
+    })();
+
+    // Scroll Reveal
+    (function() {
+      var observer = new IntersectionObserver(function(entries) {
+        entries.forEach(function(entry) {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('active');
+            observer.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.12 });
+      document.querySelectorAll('.reveal').forEach(function(el) {
+        observer.observe(el);
+      });
+    })();
+
+    // Sticky Nav
+    (function() {
+      var nav = document.querySelector('.nav');
+      var lastScrollY = window.scrollY;
+      var ticking = false;
+
+      window.addEventListener('scroll', function() {
+        if (!ticking) {
+          window.requestAnimationFrame(function() {
+            var currentScrollY = window.scrollY;
+
+            if (currentScrollY > window.innerHeight * 0.7) {
+              if (currentScrollY > lastScrollY) {
+                nav.classList.add('nav-hidden');
+              } else {
+                nav.classList.remove('nav-hidden');
+              }
+            } else {
+              nav.classList.remove('nav-hidden');
+            }
+
+            if (currentScrollY > 80) {
+              nav.classList.add('nav-scrolled');
+            } else {
+              nav.classList.remove('nav-scrolled');
+            }
+
+            lastScrollY = currentScrollY;
+            ticking = false;
+          });
+          ticking = true;
+        }
+      });
+    })();
+
+    // Active Nav Section
+    (function() {
+      var sections = document.querySelectorAll('section[id]');
+      var navLinks = document.querySelectorAll('.nav-link');
+
+      var observer = new IntersectionObserver(function(entries) {
+        entries.forEach(function(entry) {
+          if (entry.isIntersecting) {
+            navLinks.forEach(function(link) { link.classList.remove('active'); });
+            var activeLink = document.querySelector('.nav-link[href="#' + entry.target.id + '"]');
+            if (activeLink) activeLink.classList.add('active');
+          }
+        });
+      }, { threshold: 0.3 });
+
+      sections.forEach(function(section) { observer.observe(section); });
+    })();
+
+    // Theme Toggle Handler
+    (function() {
+      var btn = document.getElementById('theme-toggle');
+      if (!btn) return;
+      var sun = btn.querySelector('.sun-icon');
+      var moon = btn.querySelector('.moon-icon');
+
+      function updateToggleIcon(theme) {
+        if (theme === 'dark') {
+          sun.style.display = 'block';
+          moon.style.display = 'none';
+        } else {
+          sun.style.display = 'none';
+          moon.style.display = 'block';
+        }
+      }
+
+      var currentTheme = document.documentElement.classList.contains('dark-theme') ? 'dark' : 'light';
+      updateToggleIcon(currentTheme);
+
+      btn.addEventListener('click', function() {
+        var isDark = document.documentElement.classList.contains('dark-theme');
+        if (isDark) {
+          document.documentElement.classList.remove('dark-theme');
+          document.documentElement.classList.add('light-theme');
+          try { localStorage.setItem('theme', 'light'); } catch (e) {}
+          updateToggleIcon('light');
+        } else {
+          document.documentElement.classList.remove('light-theme');
+          document.documentElement.classList.add('dark-theme');
+          try { localStorage.setItem('theme', 'dark'); } catch (e) {}
+          updateToggleIcon('dark');
+        }
+      });
+    })();
+  </script>
+</body>
+</html>
