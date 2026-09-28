@@ -22,10 +22,10 @@
   </script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Hasit Bhatt — Observer · Thinker · Builder</title>
-  <meta name="description" content="Hasit Bhatt builds conversational AI and support automations at Uber. Observer of systems, lover of keyboards (code & piano), collector of words.">
-  <meta property="og:title" content="Hasit Bhatt — Observer · Thinker · Builder">
-  <meta property="og:description" content="Observer of systems, lover of keyboards (code & piano), builder at Uber.">
+  <title>Hasit Bhatt - Observer · Thinker · Builder</title>
+  <meta name="description" content="Hasit Bhatt is a Staff Software Engineer at Uber building conversational AI and support automations. Contributor to OrcaRouter Lite, a 1.7k-star open-source LLM router. Author of the novella What Is a Man Fixing?.">
+  <meta property="og:title" content="Hasit Bhatt - Observer · Thinker · Builder">
+  <meta property="og:description" content="Staff Software Engineer at Uber building conversational AI. Open-source contributor to a 1.7k-star LLM router, and author of a philosophical novella.">
   <meta property="og:image" content="https://hasit.in/og-image.jpg">
   <meta property="og:url" content="https://hasit.in/">
   <meta property="og:type" content="website">
@@ -71,7 +71,8 @@
         <span class="tagline-word">Builder</span>
       </p>
       <div class="hero-actions">
-        <a href="https://blog.hasit.in" class="btn btn-primary">Read My Thoughts →</a>
+        <a href="books/what-is-a-man-fixing.html" class="btn btn-primary">Read What Is a Man Fixing? →</a>
+        <a href="https://blog.hasit.in" class="btn btn-secondary">Read My Thoughts →</a>
         <a href="https://quiz.hasit.in" class="btn btn-secondary">Try Interactive Quizzes</a>
       </div>
     </div>
@@ -84,7 +85,7 @@
           <h2>About</h2>
           <p class="section-subtitle">Systems observer, keyboard lover, and builder at heart.</p>
         </div>
-        <p class="about-text">I observe systems, love making keyboards sing (whether coding or playing piano), think deeply about how things work, and find joy in poetry, stories, and meaningful quotes. Professionally, I build at Uber — previously in fintech, now focused on conversational AI and support automations.</p>
+        <p class="about-text">I observe systems, love making keyboards sing (whether coding or playing piano), think deeply about how things work, and find joy in poetry, stories, and meaningful quotes. Professionally, I build at Uber - previously in fintech, now focused on conversational AI and support automations. Outside work I contribute to open-source LLM infrastructure and write a philosophical novella, which turn out to be the same problem twice.</p>
         <div class="about-meta">
           <div class="about-meta-item">
             <span class="about-meta-label">Currently</span>
@@ -93,6 +94,10 @@
           <div class="about-meta-item">
             <span class="about-meta-label">Previously</span>
             <span class="about-meta-value">Research @ IIT Madras</span>
+          </div>
+          <div class="about-meta-item">
+            <span class="about-meta-label">Open source</span>
+            <span class="about-meta-value">Contributor to OrcaRouter Lite (1.7k stars)</span>
           </div>
         </div>
       </div>
@@ -166,6 +171,27 @@
           <p class="section-subtitle" style="margin-left: auto; margin-right: auto;">Side projects, experiments, and things that scratch an itch.</p>
         </div>
         <div class="projects-grid">
+          <div class="project-card" onclick="window.location.href='https://validate-llm.hasit.in'">
+            <div class="project-icon" aria-hidden="true">🔑</div>
+            <h3>LLM API Validator</h3>
+            <p>Point it at any LLM API - OpenAI-compatible or Anthropic - and it works out which models your key can actually reach, then lets you send a real chat completion and inspect exactly what came back. Your bearer token never leaves your browser.</p>
+            <a href="https://validate-llm.hasit.in" class="project-link" onclick="event.stopPropagation()">Try it →</a>
+          </div>
+
+          <div class="project-card" onclick="window.open('https://github.com/Continuum-AI-Corp/OrcaRouter-Lite', '_blank')">
+            <div class="project-icon" aria-hidden="true">🐋</div>
+            <h3>OrcaRouter Lite</h3>
+            <p>An open-source contributor to a 1.7k-star, MIT-licensed LLM router: self-hosted, OpenAI-compatible, and model="auto" resolves to the cheapest model that can genuinely handle the request. Anthropic and Gemini ingress, cross-provider prompt cache, keys sealed at rest.</p>
+            <a href="https://github.com/Continuum-AI-Corp/OrcaRouter-Lite" class="project-link" target="_blank" onclick="event.stopPropagation()">See the repo →</a>
+          </div>
+
+          <div class="project-card" onclick="window.location.href='books/what-is-a-man-fixing.html'">
+            <div class="project-icon" aria-hidden="true">🕯️</div>
+            <h3>What Is a Man Fixing?</h3>
+            <p>A short philosophical fable: a man who has spent his life being the most capable person in the room goes to his dead uncle's dark lighthouse, and finds a notebook with almost nothing in it. 21,000 words, and the question is never answered. Read free in the browser, built for a phone.</p>
+            <a href="books/what-is-a-man-fixing.html" class="project-link" onclick="event.stopPropagation()">Read the Book →</a>
+          </div>
+
           <div class="project-card" onclick="window.location.href='https://quiz.hasit.in'">
             <div class="project-icon" aria-hidden="true">📚</div>
             <h3>Quiz Platform</h3>
@@ -176,7 +202,7 @@
           <div class="project-card" onclick="window.open('https://instagram.com/hasit_bhatt', '_blank')">
             <div class="project-icon" aria-hidden="true">📝</div>
             <h3>Quotes & Poetry</h3>
-            <p>Words that make me pause — a collection of poetry, thoughtful quotes, and quiet musings on Instagram.</p>
+            <p>Words that make me pause - a collection of poetry, thoughtful quotes, and quiet musings on Instagram.</p>
             <a href="https://instagram.com/hasit_bhatt" class="project-link" target="_blank" onclick="event.stopPropagation()">Follow @hasit_bhatt →</a>
           </div>
 
@@ -190,21 +216,21 @@
           <div class="project-card" onclick="window.location.href='https://airgap.hasit.in'">
             <div class="project-icon" aria-hidden="true">🛡️</div>
             <h3>airgap</h3>
-            <p>A personal AI agent that runs entirely in your browser. No servers, no signup. Bring your own API key, browse the web, fetch RSS, remember facts, and branch conversations — all local, all private.</p>
+            <p>A personal AI agent that runs entirely in your browser. No servers, no signup. Bring your own API key, browse the web, fetch RSS, remember facts, and branch conversations - all local, all private.</p>
             <a href="https://airgap.hasit.in" class="project-link" onclick="event.stopPropagation()">Try airgap →</a>
           </div>
 
           <div class="project-card" onclick="window.location.href='https://quizify.hasit.in'">
             <div class="project-icon" aria-hidden="true">⚡</div>
             <h3>Quizify</h3>
-            <p>Learn anything from a URL. Paste any article, book, or webpage and get instant interactive AI-generated quizzes — effortless learning from any content.</p>
+            <p>Learn anything from a URL. Paste any article, book, or webpage and get instant interactive AI-generated quizzes - effortless learning from any content.</p>
             <a href="https://quizify.hasit.in" class="project-link" onclick="event.stopPropagation()">Try Quizify →</a>
           </div>
 
           <div class="project-card" onclick="window.location.href='https://devcheap.click'">
             <div class="project-icon" aria-hidden="true">💰</div>
             <h3>DevCheap</h3>
-            <p>Curated developer deals — 179+ verified offers across hosting, APIs, AI, databases, and dev tools. Free credits, trials, and lifetime discounts refreshed weekly.</p>
+            <p>Curated developer deals - 179+ verified offers across hosting, APIs, AI, databases, and dev tools. Free credits, trials, and lifetime discounts refreshed weekly.</p>
             <div style="display: flex; gap: 0.5rem; margin-top: auto;">
               <a href="https://devcheap.click" class="project-link" onclick="event.stopPropagation()">Browse Deals →</a>
               <a href="https://github.com/hasitpbhatt/devcheap" class="project-link" onclick="event.stopPropagation()" target="_blank">Contribute on GitHub →</a>
@@ -220,7 +246,7 @@
           <h2>Musings</h2>
           <p class="section-subtitle">Observations about technology, occasional poetry, and quotes that make me pause.</p>
         </div>
-        <p class="musings-text">This is my digital commonplace book — where I put down thoughts on software engineering, system design, and the quiet beauty of a well-crafted sentence. Think of it as a slower corner of the internet.</p>
+        <p class="musings-text">This is my digital commonplace book - where I put down thoughts on software engineering, system design, and the quiet beauty of a well-crafted sentence. Think of it as a slower corner of the internet.</p>
         <a href="https://blog.hasit.in" class="btn btn-primary">Visit My Blog →</a>
       </div>
     </section>

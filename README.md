@@ -1,6 +1,6 @@
 # hasit.in
 
-Personal landing page — built with HTML, CSS, and a sprinkle of vanilla JS.
+Personal landing page - built with HTML, CSS, and a sprinkle of vanilla JS.
 
 Stack: plain HTML/CSS/JS, hosted on Cloudflare Pages.
 
