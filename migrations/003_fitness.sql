@@ -36,7 +36,8 @@ CREATE TABLE IF NOT EXISTS fitness_goals (
 );
 
 CREATE INDEX IF NOT EXISTS idx_fitness_goals_user ON fitness_goals(user_id);
-CREATE INDEX IF NOT EXISTS idx_fitness_goals_period ON fitness_goals(period_start, period_end);
+-- idx_fitness_goals_period omitted: the pre-existing production table uses
+-- old columns (period, not period_start/period_end).
 
 CREATE TABLE IF NOT EXISTS fitness_streaks (
     user_id         INTEGER PRIMARY KEY REFERENCES core_users(id) ON DELETE CASCADE,
