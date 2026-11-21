@@ -31,9 +31,8 @@ jobs:
         with:
           command: deploy
           wranglerVersion: '4.166.0'
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
   # A deploy must never be able to mutate the D1 schema. Migrations are gated
   # behind an explicit manual workflow_dispatch with run_migrations enabled,
@@ -50,6 +49,8 @@ jobs:
       - run: npm ci
       - run: npm run db:migrate:remote
         if: github.event_name == 'workflow_dispatch' && inputs.run_migrations
+        # This runs wrangler directly, so it reads credentials from the
+        # environment rather than the action's apiToken/accountId inputs.
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
