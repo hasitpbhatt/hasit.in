@@ -11,7 +11,7 @@ routes = [
   { pattern = "freellm.hasit.in", custom_domain = true },
   { pattern = "fitness.hasit.in", custom_domain = true },
   { pattern = "finance.hasit.in", custom_domain = true },
-  { pattern = "blog.hasit.in", custom_domain = true },
+  # blog.hasit.in is intentionally absent: hosted on a separate VPS.
   { pattern = "quiz.hasit.in", custom_domain = true },
   { pattern = "games.hasit.in", custom_domain = true },
   { pattern = "auth.hasit.in", custom_domain = true },
