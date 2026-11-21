@@ -295,7 +295,7 @@ A deploy must never be able to mutate the D1 schema, so a normal push to `main` 
 
 ### Manual Pre-Deployment Checks
 
-- [ ] KV namespace IDs in `wrangler.toml` are confirmed against the real Cloudflare account
+- [x] KV namespace IDs in `wrangler.toml` are confirmed against the real Cloudflare account (`trx_faucet`, `trx_faucet_rate_limit`)
 - [ ] All required Worker secrets are set
 - [ ] JWT keys are generated and set
 - [ ] Google OAuth is configured (redirect URI: `https://auth.hasit.in/callback`)
@@ -337,7 +337,7 @@ A deploy must never be able to mutate the D1 schema, so a normal push to `main` 
 
 | Issue | Workaround |
 |-------|------------|
-| KV namespace IDs in `wrangler.toml` are placeholders | Confirm both namespace IDs against the real Cloudflare account before the first deploy |
+| KV namespace IDs | Point at `trx_faucet` and `trx_faucet_rate_limit`; keep them in sync if the namespaces are recreated |
 | D1 100MB limit | Monitor size; archive old claim logs |
 | KV 25MB limit | Price cache is tiny (~1KB) |
 | Turnstile localhost | Use `localhost` in the Turnstile dashboard |
@@ -349,7 +349,7 @@ A deploy must never be able to mutate the D1 schema, so a normal push to `main` 
 
 ## 📝 Remaining Manual Steps
 
-1. Confirm the KV namespace IDs and other Cloudflare account resources.
+1. Confirm the remaining Cloudflare account resources (D1 id is already correct).
 2. Set the Cloudflare Worker secrets, including `ADMIN_PASSWORD` for the first login on a fresh database.
 3. Run `npm run db:migrate:remote`, or use the workflow's opt-in manual migration job.
 4. Perform and verify the first deployment.

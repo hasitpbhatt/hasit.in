@@ -31,13 +31,13 @@ database_id = "ea3f54ed-75e6-4a45-b7b9-d80509efe4e8"
 
 [[kv_namespaces]]
 binding = "KV"
-id = "e6b8a9c4f2d14a7e9b3c8d5e6f7a8b9c"
-preview_id = "e6b8a9c4f2d14a7e9b3c8d5e6f7a8b9c"
+id = "a59ad55b024f424981ad02050d416032"
+preview_id = "a59ad55b024f424981ad02050d416032"
 
 [[kv_namespaces]]
 binding = "RATE_LIMIT_KV"
-id = "a1b2c3d4e5f6789012345678901234567"
-preview_id = "a1b2c3d4e5f6789012345678901234567"
+id = "abcb1136fa3c492d876676d77bf1f9e0"
+preview_id = "abcb1136fa3c492d876676d77bf1f9e0"
 
 [[durable_objects.bindings]]
 name = "AUTH_STATE"
