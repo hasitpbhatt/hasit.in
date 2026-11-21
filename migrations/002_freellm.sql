@@ -29,4 +29,5 @@ CREATE TABLE IF NOT EXISTS freellm_api_keys (
 
 CREATE INDEX IF NOT EXISTS idx_freellm_api_keys_user ON freellm_api_keys(user_id);
 CREATE INDEX IF NOT EXISTS idx_freellm_api_keys_provider ON freellm_api_keys(provider);
-CREATE UNIQUE INDEX IF NOT EXISTS idx_freellm_api_keys_hash ON freellm_api_keys(key_hash);
+-- idx_freellm_api_keys_hash omitted: the pre-existing production table has no
+-- key_hash column (old Pages schema). Add manually if the table is rebuilt.
