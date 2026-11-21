@@ -28,7 +28,6 @@ const pub = strip(publicKey.export({ type: 'spki', format: 'pem' }));
 const defaults = `# Local development secrets - NOT for production (gitignored)
 ENVIRONMENT=development
 FAUCETPAY_API_KEY=dev-dummy-faucetpay-key
-FAUCETPAY_USER_TOKEN=dev-dummy-user-token
 # Cloudflare Turnstile always-pass test secret
 TURNSTILE_SECRET=1x0000000000000000000000000000000AA
 GOOGLE_CLIENT_SECRET=dev-dummy-google-secret

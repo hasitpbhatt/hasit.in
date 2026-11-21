@@ -51,14 +51,13 @@ new_sqlite_classes = ["AuthState"]
 ENVIRONMENT = "production"
 GA_ID = "G-NNFPYD7CWG"
 ADSENSE_CLIENT = "ca-pub-7046934020222763"
-TURNSTILE_SITE_KEY = "0x4AAAAAADvU7jbz4RuK5Ibz"
-GOOGLE_CLIENT_ID = "your-google-client-id"
+TURNSTILE_SITE_KEY = "0x4AAAAAAGLkTZr2vBCLFfZJ"
+GOOGLE_CLIENT_ID = "790517677532-hbolt3juspd1pqvenepc8708msss5hag.apps.googleusercontent.com"
 GOOGLE_REDIRECT_URI = "https://auth.hasit.in/callback"
 
 # Secrets (set via: wrangler secret put SECRET_NAME)
 # TURNSTILE_SECRET
 # FAUCETPAY_API_KEY
-# FAUCETPAY_USER_TOKEN
 # JWT_PRIVATE_KEY (ES256 PEM)
 # JWT_PUBLIC_KEY (ES256 PEM)
 # GOOGLE_CLIENT_SECRET

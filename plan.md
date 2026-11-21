@@ -171,7 +171,6 @@ Set these with `wrangler secret put` before the first deploy:
 ```bash
 npx wrangler secret put TURNSTILE_SECRET
 npx wrangler secret put FAUCETPAY_API_KEY
-npx wrangler secret put FAUCETPAY_USER_TOKEN
 npx wrangler secret put JWT_PRIVATE_KEY
 npx wrangler secret put JWT_PUBLIC_KEY
 npx wrangler secret put GOOGLE_CLIENT_SECRET

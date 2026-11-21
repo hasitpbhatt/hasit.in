@@ -21,7 +21,6 @@ export interface Env {
   // Secrets (set via wrangler secret put)
   TURNSTILE_SECRET: string;
   FAUCETPAY_API_KEY: string;
-  FAUCETPAY_USER_TOKEN: string;
   JWT_PRIVATE_KEY: string;
   JWT_PUBLIC_KEY: string;
   GOOGLE_CLIENT_SECRET: string;
