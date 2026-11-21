@@ -13,10 +13,10 @@ export interface Env {
 
   // KV Namespaces
   KV: KVNamespace;
-  RATE_LIMIT_KV: KVNamespace;
 
   // Durable Objects
   AUTH_STATE: DurableObjectNamespace;
+  RATE_LIMITER: DurableObjectNamespace;
 
   // Secrets (set via wrangler secret put)
   TURNSTILE_SECRET: string;

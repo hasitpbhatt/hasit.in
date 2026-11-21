@@ -76,3 +76,4 @@ export default {
 
 export { APP_ROUTES };
 export { AuthState } from './lib/auth/auth-state';
+export { RateLimiter } from './lib/rate-limiter';

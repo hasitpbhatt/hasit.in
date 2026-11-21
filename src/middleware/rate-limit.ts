@@ -1,6 +1,7 @@
 import type { MiddlewareHandler } from 'hono';
 
 import { getClientIP } from '../lib/validator.ts';
+import type { LimitResult } from '../lib/rate-limiter.ts';
 import type { Env } from '../env';
 
 interface RateLimitConfig {
@@ -8,9 +9,6 @@ interface RateLimitConfig {
   maxRequests: number;
   keyPrefix: string;
 }
-
-/** KV enforces a minimum expirationTtl of 60 seconds. */
-const MIN_TTL_SECONDS = 60;
 
 const RATE_LIMITS: Record<string, RateLimitConfig> = {
   trx: { windowMs: 60_000, maxRequests: 10, keyPrefix: 'rl:trx' },        // 10/min for faucet claims
@@ -25,24 +23,12 @@ const RATE_LIMITS: Record<string, RateLimitConfig> = {
 
 type RateLimitedEnv = { Bindings: Env };
 
-function windowSeconds(windowMs: number): number {
-  return Math.max(MIN_TTL_SECONDS, Math.ceil(windowMs / 1000));
-}
-
-interface LimitResult {
-  allowed: boolean;
-  retryAfter: number;
-  remaining: number;
-  reset: number;
-}
-
 /**
- * Fixed-window counter in KV.
+ * Ask the RateLimiter Durable Object to consume one request.
  *
- * Two keys are written: the counter and the absolute expiry of the window.
- * The expiry is stored as an absolute timestamp (not a TTL) so the window
- * really ends 60 seconds after it opened even while traffic keeps arriving -
- * refreshing a TTL on every write would make the window never close.
+ * Using a DO removes every KV write from the request path. We deliberately
+ * fail open if the DO is unreachable: a transient DO error should not take the
+ * whole site down, and the DO is evicted/restarted only rarely.
  */
 async function consume(
   env: Env,
@@ -50,37 +36,21 @@ async function consume(
   maxRequests: number,
   windowMs: number
 ): Promise<LimitResult> {
-  const kv = env.RATE_LIMIT_KV;
-  const now = Math.floor(Date.now() / 1000);
-  const ttl = windowSeconds(windowMs);
-
-  const [current, expiryRaw] = await Promise.all([kv.get(key), kv.get(`${key}:ttl`)]);
-
-  const count = current ? parseInt(current, 10) : 0;
-  const expiry = expiryRaw ? parseInt(expiryRaw, 10) : 0;
-  const windowOpen = count > 0 && expiry > now;
-
-  if (windowOpen && count >= maxRequests) {
-    return { allowed: false, retryAfter: expiry - now, remaining: 0, reset: expiry };
+  try {
+    const stub = env.RATE_LIMITER.get(env.RATE_LIMITER.idFromName('global'));
+    const response = await stub.fetch('https://rate-limiter/consume', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key, maxRequests, windowMs }),
+    });
+    if (response.ok) {
+      return (await response.json()) as LimitResult;
+    }
+  } catch {
+    // fall through to fail-open
   }
-
-  const newCount = windowOpen ? count + 1 : 1;
-  const expiresAt = windowOpen ? expiry : now + ttl;
-
-  // expirationTtl is portable across workerd and Miniflare. The window end is
-  // stored separately, so refreshing the counter's TTL cannot extend it.
-  await kv.put(key, String(newCount), { expirationTtl: ttl });
-
-  if (!windowOpen) {
-    await kv.put(`${key}:ttl`, String(expiresAt), { expirationTtl: ttl });
-  }
-
-  return {
-    allowed: true,
-    retryAfter: 0,
-    remaining: Math.max(0, maxRequests - newCount),
-    reset: expiresAt,
-  };
+  const reset = Math.floor(Date.now() / 1000) + Math.ceil(windowMs / 1000);
+  return { allowed: true, retryAfter: 0, remaining: maxRequests - 1, reset };
 }
 
 export function rateLimitMiddleware(appName: string): MiddlewareHandler<RateLimitedEnv> {

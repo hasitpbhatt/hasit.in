@@ -22,7 +22,8 @@ const COINGECKO_IDS: Record<string, string> = {
   ZEC: 'zcash',
 };
 
-const CACHE_TTL = 60; // seconds
+// 15 minutes: /api/price feeds reward sizing, so avoid hammering CoinGecko.
+const CACHE_TTL = 900; // seconds
 
 export const coingecko = {
   async getPrice(env: Env, symbol: string): Promise<CoinGeckoPrice | null> {

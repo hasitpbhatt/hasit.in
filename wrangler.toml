@@ -6,8 +6,8 @@ compatibility_date = "2026-05-03"
 routes = [
   { pattern = "hasit.in", custom_domain = true },
   { pattern = "www.hasit.in", custom_domain = true },
-  { pattern = "trx.hasit.in", custom_domain = true },
   { pattern = "trx2.hasit.in", custom_domain = true },
+  # trx.hasit.in is intentionally absent: being reverted to its previous hosting.
   { pattern = "freellm.hasit.in", custom_domain = true },
   { pattern = "fitness.hasit.in", custom_domain = true },
   { pattern = "finance.hasit.in", custom_domain = true },
@@ -34,18 +34,21 @@ binding = "KV"
 id = "a59ad55b024f424981ad02050d416032"
 preview_id = "a59ad55b024f424981ad02050d416032"
 
-[[kv_namespaces]]
-binding = "RATE_LIMIT_KV"
-id = "abcb1136fa3c492d876676d77bf1f9e0"
-preview_id = "abcb1136fa3c492d876676d77bf1f9e0"
-
 [[durable_objects.bindings]]
 name = "AUTH_STATE"
 class_name = "AuthState"
 
+[[durable_objects.bindings]]
+name = "RATE_LIMITER"
+class_name = "RateLimiter"
+
 [[migrations]]
 tag = "v1"
 new_sqlite_classes = ["AuthState"]
+
+[[migrations]]
+tag = "v2"
+new_sqlite_classes = ["RateLimiter"]
 
 [vars]
 ENVIRONMENT = "production"

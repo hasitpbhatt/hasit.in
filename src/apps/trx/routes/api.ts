@@ -149,7 +149,7 @@ apiRoutes.get('/config', async (c) => {
   const apikey = settingsMap.get('apikey') || c.env.FAUCETPAY_API_KEY || '';
   const turnstileSiteKey = settingsMap.get('turnstile_site_key') || c.env.TURNSTILE_SITE_KEY || '';
   const turnstileSecret = settingsMap.get('turnstile_secret') || c.env.TURNSTILE_SECRET || '';
-  const rewardsStr = settingsMap.get('rewards') || '3019-90559*98.95, 90559-150932*1, 3018631*0.05';
+  const rewardsStr = settingsMap.get('rewards') || '12000-16000*90, 26000-34000*9.5, 120000*0.5';
   const rewards = parseRewards(rewardsStr);
   const hasJwtKeys = Boolean(c.env.JWT_PRIVATE_KEY && c.env.JWT_PUBLIC_KEY);
 

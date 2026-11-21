@@ -3,7 +3,6 @@ import { cors } from 'hono/cors';
 
 import { trx, toSettingsMap } from '../../../lib/db/trx-queries';
 import { faucetpay } from '../../../lib/faucetpay';
-import { coingecko } from '../../../lib/coingecko';
 import {
   isValidTRXAddress,
   verifyTurnstile,
@@ -28,6 +27,7 @@ import { rateLimitMiddleware, strictRateLimitMiddleware } from '../../../middlew
 import { strictSecurityMiddleware } from '../../../middleware/security';
 import { getSiteConfig } from '../../../lib/site-config';
 import type { Env } from '../../../env';
+import { computeStreak } from '../../../lib/streak';
 import { renderClaimPage, type PayoutRow } from './templates';
 
 export const claimRoutes = new Hono<{ Bindings: Env }>();
@@ -49,14 +49,12 @@ claimRoutes.get('/', async (c) => {
   const settingsMap = toSettingsMap(settings.results ?? []);
 
   const timer = parseInt(settingsMap.get('timer') || '5', 10);
-  const rewardsStr = settingsMap.get('rewards') || '3019-90559*98.95, 90559-150932*1, 3018631*0.05';
+  const rewardsStr = settingsMap.get('rewards') || '12000-16000*90, 26000-34000*9.5, 120000*0.5';
   const referralPct = parseInt(settingsMap.get('referral') || '50', 10);
   const limit24h = parseInt(settingsMap.get('limit_number_of_claims_per_24h') || '3', 10);
   const disallowEmail = settingsMap.get('disallow_email_claiming') === 'on';
   const balance = settingsMap.get('balance') || 'N/A';
   const turnstileSiteKey = settingsMap.get('turnstile_site_key') || c.env.TURNSTILE_SITE_KEY;
-
-  const price = await coingecko.getPrice(c.env, 'TRX');
 
   const rewards = parseRewards(rewardsStr);
   const rewardsDisplay = formatRewardsDisplay(rewards);
@@ -97,6 +95,9 @@ claimRoutes.get('/', async (c) => {
     csrf = session?.csrf ?? '';
   }
 
+  const streakRow = address ? await trx.streaks.get(c.env.DB, address) : null;
+  const streak = computeStreak(streakRow);
+
   const flash = readFlashCookie(c.req.header('Cookie') ?? null);
 
   const html = renderClaimPage({
@@ -105,7 +106,6 @@ claimRoutes.get('/', async (c) => {
     rewards: rewardsDisplay,
     claimsLeft,
     balance,
-    price,
     turnstileSiteKey,
     address: sanitizeInput(address),
     refLink,
@@ -117,6 +117,8 @@ claimRoutes.get('/', async (c) => {
     csrf,
     enabled,
     disallowEmail,
+    streak: streak.streak,
+    streakMultiplier: streak.multiplier,
     site: getSiteConfig(c.env),
     flash,
   });
@@ -197,7 +199,10 @@ claimRoutes.post(
 
     try {
       const rewards = parseRewards(rewardsStr);
-      const reward = pickReward(rewards);
+      const baseReward = pickReward(rewards);
+      const streakRow = await trx.streaks.get(c.env.DB, address);
+      const streak = computeStreak(streakRow);
+      const reward = Math.max(1, Math.floor(baseReward * streak.multiplier));
 
       const result = await faucetpay.sendCoins(c.env, address, reward, ip);
 
@@ -214,6 +219,7 @@ claimRoutes.post(
       await trx.claimlog.insert(c.env.DB, { address, ip, reward, shortlink: '' });
       await trx.ips.setLastUsed(c.env.DB, ip);
       await trx.addresses.setLastUsed(c.env.DB, address);
+      await trx.streaks.upsert(c.env.DB, address, streak.streak, streak.day);
 
       if (result.balance?.balance) {
         await trx.claimlog.setBalance(c.env.DB, result.balance.balance);
@@ -233,7 +239,12 @@ claimRoutes.post(
       headers.append('Set-Cookie', clearClaimSession(c.env));
       headers.append(
         'Set-Cookie',
-        createFlashCookie(`Successfully claimed ${formatTRX(reward)}!`, 'success', c.env)
+        createFlashCookie(
+          `Successfully claimed ${formatTRX(reward)}!` +
+            (streak.streak > 1 ? ` (${streak.streak}-day streak, +${Math.round((streak.multiplier - 1) * 100)}%)` : ''),
+          'success',
+          c.env
+        )
       );
       return new Response(null, { status: 302, headers });
     } finally {

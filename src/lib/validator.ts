@@ -120,12 +120,14 @@ export function parseRewards(rewardsStr: string): RewardRange[] {
   const parts = rewardsStr.split(',').map(p => p.trim());
   
   for (const part of parts) {
-    const [weightStr, rangeStr] = part.split('*');
-    if (!weightStr || !rangeStr) continue;
-    
+    // Faucet-in-a-BOX format is `range*weight`, e.g. `3304-99113*98.95`
+    // means "pick from 3304..99113 with weight 98.95".
+    const [rangeStr, weightStr] = part.split('*');
+    if (!rangeStr || !weightStr) continue;
+
     const weight = parseFloat(weightStr);
-    if (isNaN(weight)) continue;
-    
+    if (isNaN(weight) || weight <= 0) continue;
+
     if (rangeStr.includes('-')) {
       const [min, max] = rangeStr.split('-').map(Number);
       if (!isNaN(min) && !isNaN(max)) {

@@ -60,6 +60,18 @@ export const trx = {
     },
   },
 
+  streaks: {
+    get: (db: D1Database, address: string) =>
+      db.prepare('SELECT streak, last_claim_day FROM trx_streaks WHERE address = ?').bind(address)
+        .first() as Promise<{ streak: number; last_claim_day: number } | null>,
+    upsert: (db: D1Database, address: string, streak: number, day: number) =>
+      db.prepare(`
+        INSERT INTO trx_streaks (address, streak, last_claim_day)
+        VALUES (?, ?, ?)
+        ON CONFLICT(address) DO UPDATE SET streak = excluded.streak, last_claim_day = excluded.last_claim_day
+      `).bind(address, streak, day).run(),
+  },
+
   refs: {
     getByAddress: (db: D1Database, address: string) =>
       db.prepare('SELECT id FROM trx_refs WHERE address = ?').bind(address).first(),

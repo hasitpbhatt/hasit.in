@@ -7,7 +7,8 @@ import {
   renderAnalyticsTags,
   type SiteConfig,
 } from '../../../lib/site-config';
-import type { CoinGeckoPrice } from '../../../lib/coingecko';
+import { renderAuthorNav, renderQuoteOfDay } from '../../../lib/quotes.ts';
+import { renderCmcWidget, renderFaucetFooterLinks } from '../../../lib/cmc-widget.ts';
 
 export interface ClaimPageData {
   page: 'eligible' | 'paid' | 'visit_later' | 'disabled';
@@ -15,7 +16,6 @@ export interface ClaimPageData {
   rewards: string;
   claimsLeft: number;
   balance: string;
-  price: CoinGeckoPrice | null;
   turnstileSiteKey: string;
   address: string;
   refLink: string;
@@ -27,6 +27,8 @@ export interface ClaimPageData {
   csrf: string;
   enabled: boolean;
   disallowEmail: boolean;
+  streak: number;
+  streakMultiplier: number;
   site: SiteConfig;
   flash: { message: string; type: string } | null;
 }
@@ -37,20 +39,11 @@ export interface PayoutRow {
   reward: number;
 }
 
-function formatPrice(price: CoinGeckoPrice | null): string {
-  if (!price) return 'N/A';
-  const change =
-    price.usd_24h_change >= 0
-      ? `+${price.usd_24h_change.toFixed(2)}%`
-      : `${price.usd_24h_change.toFixed(2)}%`;
-  const changeColor = price.usd_24h_change >= 0 ? '#2E9E5B' : '#D14B4B';
-  return `$${price.usd.toFixed(4)} <span style="color:${changeColor}">(${change})</span> | ₿${price.btc.toFixed(8)}`;
-}
-
 function renderNav(): string {
   return `<nav class="nav" role="navigation" aria-label="Hasit.in Network">
   <div class="nav-inner">
     <a href="https://hasit.in" class="nav-logo" aria-label="Hasit.in Home">HB</a>
+    ${renderAuthorNav('https://trx.hasit.in')}
     <div class="nav-links">
       <a href="https://hasit.in" class="nav-link">Home</a>
       <a href="https://blog.hasit.in" class="nav-link">Blog</a>
@@ -116,7 +109,8 @@ function renderHeader(data: ClaimPageData): string {
     <div class="col-md-6">
       <div class="cmc-widget">
         <div class="price-ticker">
-          <strong>TRX Price:</strong> ${formatPrice(data.price)}
+          <strong>TRX Price:</strong>
+          ${renderCmcWidget()}
         </div>
       </div>
     </div>
@@ -130,7 +124,8 @@ function renderHeader(data: ClaimPageData): string {
       .join('')}
   </ul>
 
-  <p class="text-center claims-left"><strong>${data.claimsLeft >= 0 ? data.claimsLeft : '∞'}</strong> daily claims left.</p>`;
+  <p class="text-center claims-left"><strong>${data.claimsLeft >= 0 ? data.claimsLeft : '∞'}</strong> daily claims left.</p>
+  ${data.streak > 1 ? `<p class="text-center streak-info">🔥 ${data.streak}-day streak — <strong>+${Math.round((data.streakMultiplier - 1) * 100)}%</strong> bonus on every claim</p>` : ''}`;
 }
 
 function renderClaimForm(data: ClaimPageData): string {
@@ -154,6 +149,7 @@ function renderClaimForm(data: ClaimPageData): string {
   </div>
 
   <div id="game_area" data-game="trx">
+    <h3 class="game-title">Match the Card Pairs</h3>
     <div class="game-header">
       <span class="trx-badge trx-badge-accent">Human Verification</span>
       <span class="trx-badge trx-badge-warning" id="game-progress">0/6 Pairs</span>
@@ -223,15 +219,7 @@ function renderRecentPayouts(payouts: PayoutRow[]): string {
 }
 
 function renderFooter(data: ClaimPageData): string {
-  return `<div class="promotion-links text-center">
-  <a href="https://faucetlist.top/?r=TT7ZHznpSW3qjGwNaQWcshzcwQihhxGS6J&order=e" target="_blank" class="btn btn-link">Click this link for more crypto faucets</a>
-  <br>
-  <a href="https://www.facebook.com/sharer/sharer.php?u=https://trx.hasit.in" target="_blank" class="btn btn-link">Share on Facebook</a>
-  <br>
-  <a href="https://blog.hasit.in/" target="_blank" class="btn btn-link">blog</a>
-  <a href="https://open.spotify.com/show/4ONLihbtq88dUDvTtGxT47" target="_blank" class="btn btn-link">podcast</a>
-  <a href="https://faucetlist.top/faucet-in-a-box-ultimate" target="_blank" class="btn btn-link">Faucet in a BOX Ultimate</a>
-</div>
+  return `${renderFaucetFooterLinks()}
 
 ${renderAdSlot(data.site, 'ad-bottom')}`;
 }
@@ -251,6 +239,7 @@ ${renderHeader(data)}
 <div class="container">
 ${renderFlash(data)}
 ${content}
+${renderQuoteOfDay()}
 </div>
 ${renderFooter(data)}
 

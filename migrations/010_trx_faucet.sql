@@ -66,7 +66,7 @@ CREATE TABLE IF NOT EXISTS trx_NH_Log (
 -- Seed defaults (INSERT OR IGNORE keeps existing production values)
 INSERT OR IGNORE INTO trx_settings (name, value) VALUES
     ('timer', '5'),
-    ('rewards', '3019-90559*98.95, 90559-150932*1, 3018631*0.05'),
+    ('rewards', '12000-16000*90, 26000-34000*9.5, 120000*0.5'),
     ('referral', '50'),
     ('limit_number_of_claims_per_24h', '3'),
     ('ref_users', '0'),
