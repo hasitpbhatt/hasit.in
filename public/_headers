@@ -1,0 +1,18 @@
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+
+/styles.css
+  Cache-Control: public, max-age=3600
+
+/styles-trx.css
+  Cache-Control: public, max-age=3600
+
+/memory-game.js
+  Cache-Control: public, max-age=3600
+
+/interactions.js
+  Cache-Control: public, max-age=3600
+
+/books/*
+  Cache-Control: public, max-age=3600

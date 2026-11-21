@@ -1,4 +1,24 @@
-<!DOCTYPE html>
+import { Hono } from 'hono';
+import { cors } from 'hono/cors';
+import type { Env } from '../../env';
+import {
+  getSiteConfig,
+  renderAdSlot,
+  renderAdsenseLoader,
+  renderAnalyticsTags,
+} from '../../lib/site-config';
+
+export const portfolioApp = new Hono<{ Bindings: Env }>();
+
+portfolioApp.use('*', cors({
+  origin: ['https://hasit.in', 'https://www.hasit.in'],
+  credentials: true,
+}));
+
+// Serve the existing portfolio HTML
+portfolioApp.get('/', (c) => {
+  const site = getSiteConfig(c.env);
+  const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <script>
@@ -23,15 +43,15 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Hasit Bhatt - Observer · Thinker · Builder</title>
-  <meta name="description" content="Hasit Bhatt is a Staff Software Engineer at Uber building conversational AI and support automations. Contributor to OrcaRouter Lite, a 1.7k-star open-source LLM router. Author of the novella What Is a Man Fixing?.">
+  <meta name="description" content="Staff Software Engineer at Uber building conversational AI and support automations. Contributor to OrcaRouter Lite, a 1.7k-star open-source LLM router. Author of the novella What Is a Man Fixing?.">
   <meta property="og:title" content="Hasit Bhatt - Observer · Thinker · Builder">
   <meta property="og:description" content="Staff Software Engineer at Uber building conversational AI. Open-source contributor to a 1.7k-star LLM router, and author of a philosophical novella.">
-  <meta property="og:image" content="https://hasit.in/og-image.jpg">
   <meta property="og:url" content="https://hasit.in/">
   <meta property="og:type" content="website">
   <meta name="twitter:card" content="summary_large_image">
-  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7046934020222763" crossorigin="anonymous"></script>
-  <link rel="stylesheet" href="styles.css">
+  ${renderAnalyticsTags(site)}
+  ${renderAdsenseLoader(site)}
+  <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
   <a href="#main" class="skip-link">Skip to content</a>
@@ -45,6 +65,20 @@
         <a href="#projects" class="nav-link">Projects</a>
         <a href="#musings" class="nav-link">Musings</a>
         <a href="#connect" class="nav-link">Connect</a>
+        <div class="nav-dropdown">
+          <button class="nav-link nav-dropdown-trigger" aria-expanded="false" aria-haspopup="true">Apps ▾</button>
+          <div class="nav-dropdown-menu" role="menu">
+            <a href="https://trx.hasit.in" class="nav-dropdown-item" role="menuitem"><span class="nav-dropdown-icon">💰</span><span>TRX Faucet</span></a>
+            <a href="https://freellm.hasit.in" class="nav-dropdown-item" role="menuitem"><span class="nav-dropdown-icon">🔑</span><span>FreeLLM</span></a>
+            <a href="https://fitness.hasit.in" class="nav-dropdown-item" role="menuitem"><span class="nav-dropdown-icon">💪</span><span>Fitness</span></a>
+            <a href="https://finance.hasit.in" class="nav-dropdown-item" role="menuitem"><span class="nav-dropdown-icon">📊</span><span>Finance</span></a>
+            <a href="https://games.hasit.in" class="nav-dropdown-item" role="menuitem"><span class="nav-dropdown-icon">🎮</span><span>Games</span></a>
+            <a href="https://quiz.hasit.in" class="nav-dropdown-item" role="menuitem"><span class="nav-dropdown-icon">📚</span><span>Quiz</span></a>
+            <a href="https://quizify.hasit.in" class="nav-dropdown-item" role="menuitem"><span class="nav-dropdown-icon">⚡</span><span>Quizify</span></a>
+            <a href="https://airgap.hasit.in" class="nav-dropdown-item" role="menuitem"><span class="nav-dropdown-icon">🛡️</span><span>Airgap</span></a>
+            <a href="https://devcheap.click" class="nav-dropdown-item" role="menuitem"><span class="nav-dropdown-icon">💰</span><span>DevCheap</span></a>
+          </div>
+        </div>
         <button id="theme-toggle" type="button" class="nav-link" aria-label="Toggle theme" style="background: none; border: none; cursor: pointer; padding: 0 0 0 8px; display: flex; align-items: center; justify-content: center;">
           <svg class="sun-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 18px; height: 18px; display: none;"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
           <svg class="moon-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 18px; height: 18px; display: none;"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
@@ -236,6 +270,13 @@
               <a href="https://github.com/hasitpbhatt/devcheap" class="project-link" onclick="event.stopPropagation()" target="_blank">Contribute on GitHub →</a>
             </div>
           </div>
+
+          <div class="project-card" onclick="window.location.href='https://trx.hasit.in'">
+            <div class="project-icon" aria-hidden="true">💰</div>
+            <h3>TRX Faucet</h3>
+            <p>Free TRX faucet with instant FaucetPay payouts. Memory game verification, referral program, and daily claims.</p>
+            <a href="https://trx.hasit.in" class="project-link" onclick="event.stopPropagation()">Claim TRX →</a>
+          </div>
         </div>
       </div>
     </section>
@@ -279,6 +320,8 @@
     </section>
   </main>
 
+  ${renderAdSlot(site, 'ad-bottom')}
+
   <footer>
     <div class="container-narrow">
       <a href="#top" class="back-to-top">Back to top ↑</a>
@@ -287,9 +330,8 @@
   </footer>
 
   <script>
-    // Year
     document.getElementById('year').textContent = new Date().getFullYear();
-
+    
     // Particles
     (function() {
       var canvas = document.getElementById('particles-canvas');
@@ -298,196 +340,73 @@
       var particles = [];
       var animId;
       var w, h;
-
-      function resize() {
-        w = canvas.parentElement.offsetWidth;
-        h = canvas.parentElement.offsetHeight;
-        canvas.width = w;
-        canvas.height = h;
-      }
-      resize();
-      window.addEventListener('resize', resize);
-
-      function getParticleRGB() {
-        return document.documentElement.classList.contains('dark-theme') ? '255,255,255' : '0,0,0';
-      }
-
-      function Particle() {
-        this.x = Math.random() * w;
-        this.y = Math.random() * h;
-        this.size = Math.random() * 1.5 + 0.5;
-        this.speedY = -(Math.random() * 0.15 + 0.05);
-        this.opacity = Math.random() * 0.2 + 0.05;
-      }
-      Particle.prototype.update = function() {
-        this.y += this.speedY;
-        if (this.y < -10) { this.y = h + 10; this.x = Math.random() * w; }
-      };
-      Particle.prototype.draw = function(rgb) {
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(' + rgb + ', ' + this.opacity + ')';
-        ctx.fill();
-      };
-
+      function resize() { w = canvas.parentElement.offsetWidth; h = canvas.parentElement.offsetHeight; canvas.width = w; canvas.height = h; }
+      resize(); window.addEventListener('resize', resize);
+      function getParticleRGB() { return document.documentElement.classList.contains('dark-theme') ? '255,255,255' : '0,0,0'; }
+      function Particle() { this.x = Math.random() * w; this.y = Math.random() * h; this.size = Math.random() * 1.5 + 0.5; this.speedY = -(Math.random() * 0.15 + 0.05); this.opacity = Math.random() * 0.2 + 0.05; }
+      Particle.prototype.update = function() { this.y += this.speedY; if (this.y < -10) { this.y = h + 10; this.x = Math.random() * w; } };
+      Particle.prototype.draw = function(rgb) { ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); ctx.fillStyle = 'rgba(' + rgb + ', ' + this.opacity + ')'; ctx.fill(); };
       var count = Math.min(Math.floor(w * 0.03), 35);
       for (var i = 0; i < count; i++) particles.push(new Particle());
-
-      function animate() {
-        ctx.clearRect(0, 0, w, h);
-        var rgb = getParticleRGB();
-        for (var i = 0; i < particles.length; i++) {
-          particles[i].update();
-          particles[i].draw(rgb);
-        }
-        animId = requestAnimationFrame(animate);
-      }
+      function animate() { ctx.clearRect(0, 0, w, h); var rgb = getParticleRGB(); for (var i = 0; i < particles.length; i++) { particles[i].update(); particles[i].draw(rgb); } animId = requestAnimationFrame(animate); }
       animate();
     })();
 
     // Hero stagger
     (function() {
       var tagline = document.getElementById('tagline');
-      if (tagline) {
-        setTimeout(function() { tagline.classList.add('loaded'); }, 300);
-        setTimeout(function() {
-          document.querySelector('.hero').classList.add('loaded');
-        }, 400);
-      }
+      if (tagline) { setTimeout(function() { tagline.classList.add('loaded'); }, 300); setTimeout(function() { document.querySelector('.hero').classList.add('loaded'); }, 400); }
     })();
 
     // Scroll Reveal
     (function() {
-      var observer = new IntersectionObserver(function(entries) {
-        entries.forEach(function(entry) {
-          if (entry.isIntersecting) {
-            entry.target.classList.add('active');
-            observer.unobserve(entry.target);
-          }
-        });
-      }, { threshold: 0.12 });
-      document.querySelectorAll('.reveal').forEach(function(el) {
-        observer.observe(el);
-      });
+      var observer = new IntersectionObserver(function(entries) { entries.forEach(function(entry) { if (entry.isIntersecting) { entry.target.classList.add('active'); observer.unobserve(entry.target); } }); }, { threshold: 0.12 });
+      document.querySelectorAll('.reveal').forEach(function(el) { observer.observe(el); });
     })();
 
     // Sticky Nav
     (function() {
-      var nav = document.querySelector('.nav');
-      var lastScrollY = window.scrollY;
-      var ticking = false;
-
-      window.addEventListener('scroll', function() {
-        if (!ticking) {
-          window.requestAnimationFrame(function() {
-            var currentScrollY = window.scrollY;
-
-            if (currentScrollY > window.innerHeight * 0.7) {
-              if (currentScrollY > lastScrollY) {
-                nav.classList.add('nav-hidden');
-              } else {
-                nav.classList.remove('nav-hidden');
-              }
-            } else {
-              nav.classList.remove('nav-hidden');
-            }
-
-            if (currentScrollY > 80) {
-              nav.classList.add('nav-scrolled');
-            } else {
-              nav.classList.remove('nav-scrolled');
-            }
-
-            lastScrollY = currentScrollY;
-            ticking = false;
-          });
-          ticking = true;
-        }
-      });
+      var nav = document.querySelector('.nav'); var lastScrollY = window.scrollY; var ticking = false;
+      window.addEventListener('scroll', function() { if (!ticking) { window.requestAnimationFrame(function() { var currentScrollY = window.scrollY; if (currentScrollY > window.innerHeight * 0.7) { if (currentScrollY > lastScrollY) { nav.classList.add('nav-hidden'); } else { nav.classList.remove('nav-hidden'); } } else { nav.classList.remove('nav-hidden'); } if (currentScrollY > 80) { nav.classList.add('nav-scrolled'); } else { nav.classList.remove('nav-scrolled'); } lastScrollY = currentScrollY; ticking = false; }); ticking = true; } });
     })();
 
     // Active Nav Section
     (function() {
-      var sections = document.querySelectorAll('section[id]');
-      var navLinks = document.querySelectorAll('.nav-link');
-
-      var observer = new IntersectionObserver(function(entries) {
-        entries.forEach(function(entry) {
-          if (entry.isIntersecting) {
-            navLinks.forEach(function(link) { link.classList.remove('active'); });
-            var activeLink = document.querySelector('.nav-link[href="#' + entry.target.id + '"]');
-            if (activeLink) activeLink.classList.add('active');
-          }
-        });
-      }, { threshold: 0.3 });
-
+      var sections = document.querySelectorAll('section[id]'); var navLinks = document.querySelectorAll('.nav-link');
+      var observer = new IntersectionObserver(function(entries) { entries.forEach(function(entry) { if (entry.isIntersecting) { navLinks.forEach(function(link) { link.classList.remove('active'); }); var activeLink = document.querySelector('.nav-link[href="#' + entry.target.id + '"]'); if (activeLink) activeLink.classList.add('active'); } }); }, { threshold: 0.3 });
       sections.forEach(function(section) { observer.observe(section); });
     })();
 
-    // Theme Toggle Handler
+    // Theme Toggle
     (function() {
       var btn = document.getElementById('theme-toggle');
       if (!btn) return;
-      var sun = btn.querySelector('.sun-icon');
-      var moon = btn.querySelector('.moon-icon');
-
-      function updateToggleIcon(theme) {
-        if (theme === 'dark') {
-          sun.style.display = 'block';
-          moon.style.display = 'none';
-        } else {
-          sun.style.display = 'none';
-          moon.style.display = 'block';
-        }
-      }
-
-      var currentTheme = document.documentElement.classList.contains('dark-theme') ? 'dark' : 'light';
-      updateToggleIcon(currentTheme);
-
-      btn.addEventListener('click', function() {
-        var isDark = document.documentElement.classList.contains('dark-theme');
-        if (isDark) {
-          document.documentElement.classList.remove('dark-theme');
-          document.documentElement.classList.add('light-theme');
-          try { localStorage.setItem('theme', 'light'); } catch (e) {}
-          updateToggleIcon('light');
-        } else {
-          document.documentElement.classList.remove('light-theme');
-          document.documentElement.classList.add('dark-theme');
-          try { localStorage.setItem('theme', 'dark'); } catch (e) {}
-          updateToggleIcon('dark');
-        }
-      });
+      var sun = btn.querySelector('.sun-icon'); var moon = btn.querySelector('.moon-icon');
+      function updateToggleIcon(theme) { if (theme === 'dark') { sun.style.display = 'block'; moon.style.display = 'none'; } else { sun.style.display = 'none'; moon.style.display = 'block'; } }
+      var currentTheme = document.documentElement.classList.contains('dark-theme') ? 'dark' : 'light'; updateToggleIcon(currentTheme);
+      btn.addEventListener('click', function() { var isDark = document.documentElement.classList.contains('dark-theme'); if (isDark) { document.documentElement.classList.remove('dark-theme'); document.documentElement.classList.add('light-theme'); try { localStorage.setItem('theme', 'light'); } catch (e) {} updateToggleIcon('light'); } else { document.documentElement.classList.remove('light-theme'); document.documentElement.classList.add('dark-theme'); try { localStorage.setItem('theme', 'dark'); } catch (e) {} updateToggleIcon('dark'); } });
     })();
 
-    // Mobile Hamburger Menu
+    // Mobile Hamburger
     (function() {
-      var hamburger = document.querySelector('.nav-hamburger');
-      var menu = document.querySelector('.nav-links');
+      var hamburger = document.querySelector('.nav-hamburger'); var menu = document.querySelector('.nav-links');
       if (!hamburger || !menu) return;
+      hamburger.addEventListener('click', function() { var isOpen = menu.classList.toggle('open'); hamburger.classList.toggle('open'); hamburger.setAttribute('aria-expanded', isOpen); document.body.style.overflow = isOpen ? 'hidden' : ''; if (isOpen) { hamburger.setAttribute('aria-label', 'Close menu'); } else { hamburger.setAttribute('aria-label', 'Menu'); } });
+      menu.querySelectorAll('a').forEach(function(link) { link.addEventListener('click', function() { menu.classList.remove('open'); hamburger.classList.remove('open'); hamburger.setAttribute('aria-expanded', 'false'); hamburger.setAttribute('aria-label', 'Menu'); document.body.style.overflow = ''; }); });
+    })();
 
-      hamburger.addEventListener('click', function() {
-        var isOpen = menu.classList.toggle('open');
-        hamburger.classList.toggle('open');
-        hamburger.setAttribute('aria-expanded', isOpen);
-        document.body.style.overflow = isOpen ? 'hidden' : '';
-        if (isOpen) {
-          hamburger.setAttribute('aria-label', 'Close menu');
-        } else {
-          hamburger.setAttribute('aria-label', 'Menu');
-        }
-      });
-
-      menu.querySelectorAll('a').forEach(function(link) {
-        link.addEventListener('click', function() {
-          menu.classList.remove('open');
-          hamburger.classList.remove('open');
-          hamburger.setAttribute('aria-expanded', 'false');
-          hamburger.setAttribute('aria-label', 'Menu');
-          document.body.style.overflow = '';
-        });
-      });
+    // Dropdown
+    (function() {
+      var trigger = document.querySelector('.nav-dropdown-trigger');
+      var menu = document.querySelector('.nav-dropdown-menu');
+      if (!trigger || !menu) return;
+      trigger.addEventListener('click', function(e) { e.stopPropagation(); var expanded = trigger.getAttribute('aria-expanded') === 'true'; trigger.setAttribute('aria-expanded', (!expanded).toString()); menu.style.display = expanded ? 'none' : 'block'; });
+      document.addEventListener('click', function() { trigger.setAttribute('aria-expanded', 'false'); menu.style.display = 'none'; });
     })();
   </script>
 </body>
-</html>
+</html>`;
+  return c.html(html);
+});
+
+portfolioApp.get('/health', (c) => c.json({ status: 'ok', app: 'portfolio' }));

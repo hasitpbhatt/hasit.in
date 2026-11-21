@@ -1,2 +1,35 @@
+# Dependencies
+node_modules/
+
+# Scratch/tooling dirs
 dumpyard/
 .opencode/
+.orcacode-review/
+
+# Build output
+dist/
+.wrangler/
+
+# Local secrets
+.dev.vars
+*.pem
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Testing
+coverage/
+
+# Misc
+*.local
