@@ -426,10 +426,7 @@ function renderAdminSettings(settings: Map<string, string>, csrf: string): strin
       <div class="card">
         <div class="card-header">Security</div>
         <div class="card-body">
-          <div class="form-group">
-            <label>Turnstile Site Key</label>
-            <input type="text" name="turnstile_site_key" class="form-control" value="${escapeHtml(get('turnstile_site_key'))}">
-          </div>
+          <p class="text-muted small">The Turnstile site key and secret are set as deployment configuration and cannot be changed here.</p>
           <div class="form-group">
             <label>Country Ban List (comma separated ISO codes)</label>
             <input type="text" name="country_ban_list" class="form-control" value="${escapeHtml(get('country_ban_list'))}">

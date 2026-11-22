@@ -53,8 +53,13 @@ claimRoutes.get('/', async (c) => {
   const referralPct = parseInt(settingsMap.get('referral') || '50', 10);
   const limit24h = parseInt(settingsMap.get('limit_number_of_claims_per_24h') || '3', 10);
   const disallowEmail = settingsMap.get('disallow_email_claiming') === 'on';
-  const balance = settingsMap.get('balance') || 'N/A';
-  const turnstileSiteKey = settingsMap.get('turnstile_site_key') || c.env.TURNSTILE_SITE_KEY;
+  // Prefer the live FaucetPay balance so the page is never stale. The stored
+  // value is only a fallback if the provider is temporarily unreachable.
+  const liveBalance = await faucetpay.getBalance(c.env);
+  const balance = liveBalance?.balance || settingsMap.get('balance') || 'N/A';
+  // The env var is authoritative: a legacy DB value can hold an old test key
+  // that no longer matches TURNSTILE_SECRET, silently breaking every claim.
+  const turnstileSiteKey = c.env.TURNSTILE_SITE_KEY || settingsMap.get('turnstile_site_key') || '';
 
   const rewards = parseRewards(rewardsStr);
   const rewardsDisplay = formatRewardsDisplay(rewards);

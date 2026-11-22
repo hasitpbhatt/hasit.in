@@ -52,6 +52,9 @@ async function fpPost(env: Env, endpoint: string, params: Record<string, string>
       'User-Agent': 'hasit-in/1.0',
     },
     body: body.toString(),
+    // Never let a slow provider stall a page render; getBalance() falls back
+    // to the stored value when this fires.
+    signal: AbortSignal.timeout(3000),
   });
 
   if (!response.ok) {
