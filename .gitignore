@@ -9,6 +9,10 @@ dumpyard/
 # Build output
 dist/
 .wrangler/
+.next/
+out/
+*.tsbuildinfo
+public/apps/
 
 # Local secrets
 .dev.vars

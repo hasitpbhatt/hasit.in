@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { resolveAppKey, isLocalHostname } from '../src/lib/host-routing.ts';
+import { getSpaAssetPath, resolveAppKey, isLocalHostname } from '../src/lib/host-routing.ts';
 
 test('root domain serves the portfolio', () => {
   assert.equal(resolveAppKey('hasit.in'), '');
@@ -43,4 +43,17 @@ test('isLocalHostname recognises loopback only', () => {
   assert.equal(isLocalHostname('localhost'), true);
   assert.equal(isLocalHostname('127.0.0.1'), true);
   assert.equal(isLocalHostname('trx.hasit.in'), false);
+});
+
+test('planned SPA hosts map to their static asset directories', () => {
+  for (const [hostname, app] of [
+    ['freellm.hasit.in', 'freellm'],
+    ['fitness.hasit.in', 'fitness'],
+    ['finance.hasit.in', 'finance'],
+    ['quiz.hasit.in', 'quiz'],
+    ['games.hasit.in', 'games'],
+  ]) {
+    const expected = app === 'fitness' ? '/apps/fitness/gu/' : `/apps/${app}/`;
+    assert.equal(getSpaAssetPath(resolveAppKey(hostname)), expected);
+  }
 });

@@ -1,0 +1,10 @@
+{
+  "name": "investment-finder",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+"scripts": {
+    "deploy": "vercel deploy",
+    "deploy:prod": "vercel --prod"
+  }
+}

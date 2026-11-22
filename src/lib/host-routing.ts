@@ -30,6 +30,17 @@ const SUBDOMAIN_APPS: Record<string, AppKey> = {
 };
 
 const ROOT_DOMAIN = 'hasit.in';
+const SPA_ASSET_PATHS: Partial<Record<AppKey, string>> = {
+  freellm: '/apps/freellm/',
+  fitness: '/apps/fitness/gu/',
+  finance: '/apps/finance/',
+  quiz: '/apps/quiz/',
+  games: '/apps/games/',
+};
+
+export function getSpaAssetPath(appKey: AppKey): string | null {
+  return SPA_ASSET_PATHS[appKey] ?? null;
+}
 
 /** True for localhost / loopback hostnames. */
 export function isLocalHostname(hostname: string): boolean {

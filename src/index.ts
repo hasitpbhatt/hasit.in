@@ -10,7 +10,7 @@ import { blogApp } from './apps/blog';
 import { quizApp } from './apps/quiz';
 import { gamesApp } from './apps/games';
 import { authRoutes } from './lib/auth/routes';
-import { isLocalHostname, resolveAppKey, type AppKey } from './lib/host-routing';
+import { getSpaAssetPath, isLocalHostname, resolveAppKey, type AppKey } from './lib/host-routing';
 
 type AppEnv = { Bindings: Env };
 
@@ -61,6 +61,12 @@ export default {
 
     const appKey =
       devApp !== null && devApp in APP_ROUTES ? devApp : resolveAppKey(hostname, local);
+
+    const spaAssetPath = url.pathname === '/' ? getSpaAssetPath(appKey) : null;
+    if (spaAssetPath) {
+      return Response.redirect(new URL(spaAssetPath, url), 302);
+    }
+
     const app = APP_ROUTES[appKey] ?? APP_ROUTES[''];
 
     // Request headers are immutable, so build a mutable copy first.

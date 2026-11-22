@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MindVault</title>
+    <meta name="description" content="MindVault helps you review consumed content and quickly grasp new concepts through interactive quizzes. Master knowledge with active recall and spaced repetition.">
+    <link rel="preconnect" href="https://raw.githubusercontent.com">
+    <link rel="preconnect" href="https://cdn.tailwindcss.com">
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="prefetch" href="https://raw.githubusercontent.com/hasitpbhatt/gitquiz/main/courses/courses_list.txt">
+    <link rel="canonical" href="https://quiz.hasit.in/">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://quiz.hasit.in/">
+    <meta property="og:title" content="MindVault | Review, Recall & Master Knowledge">
+    <meta property="og:description" content="Review what you've learned and grasp new concepts fast with interactive quizzes. Powered by active recall and spaced repetition.">
+    <meta property="og:site_name" content="MindVault">
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:title" content="MindVault | Review, Recall & Master Knowledge">
+    <meta property="twitter:description" content="Review what you've learned and grasp new concepts fast with interactive quizzes. Powered by active recall and spaced repetition.">
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "EducationalResource",
+        "name": "MindVault",
+        "description": "Interactive quiz platform for reviewing previously consumed content and rapid acquisition of new concepts through active recall and spaced repetition.",
+        "learningResourceType": "Interactive Quiz",
+        "educationalAlignment": {
+            "@type": "AlignmentObject",
+            "alignmentType": "educationalSubject",
+            "targetName": "Knowledge Mastery"
+        },
+        "author": {
+            "@type": "Person",
+            "name": "Hasit Bhatt"
+        },
+        "audience": {
+            "@type": "Audience",
+            "audienceType": "Lifelong learners"
+        }
+    }
+    </script>
+    <!-- <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7046934020222763" crossorigin="anonymous"></script> -->
+    <script>tailwind.config={darkMode:'class'};!function(){var e=localStorage.getItem("quizTheme"),t=window.matchMedia("(prefers-color-scheme: dark)").matches;if(e==="dark"||(!e&&t)){document.documentElement.classList.add("dark");document.documentElement.setAttribute("data-theme","dark")}else if(e==="light"){document.documentElement.setAttribute("data-theme","light")}}()</script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles-theme.css">
+    <link rel="stylesheet" href="styles-components.css">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles-responsive.css">
+</head>
+<body class="min-h-screen p-4 md:p-8 flex flex-col items-center transition-colors duration-300">
+
+    <div id="app-container" class="w-full max-w-2xl mt-4">
+        <!-- Theme Toggle Button (Fixed Position) -->
+        <button id="theme-toggle" class="fixed top-4 left-4 p-3 rounded-full shadow-lg z-50 transition-all transform hover:scale-105" title="Toggle theme">
+            <span id="theme-icon">🌙</span>
+        </button>
+
+        <!-- Share Button (Fixed Position) -->
+        <button id="share-btn" class="fixed top-4 right-4 p-3 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg z-50 transition-all transform hover:scale-105" title="Share Quiz">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
+                <polyline points="16 6 12 2 8 6"/>
+                <line x1="12" y1="2" x2="12" y2="15"/>
+            </svg>
+        </button>
+        
+        <!-- Setup Screen -->
+        <div id="setup-container" class="glass-card rounded-3xl p-8 shadow-2xl animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <header>
+                <h1 class="font-700">MindVault</h1>
+                <p>Read. Retain. Rise.</p>
+            </header>
+
+             <div id="daily-streak-badge" class="hidden mb-5 rounded-xl text-center p-3">
+                    <span class="text-sm font-800 flex items-center justify-center gap-2">
+                        <span>🔥</span>
+                        <span><span id="daily-streak-count">0</span> day streak</span>
+                    </span>
+                </div>
+
+             <div class="space-y-5">
+
+                <div id="mode-code" class="space-y-4">
+                    <div class="search-filter-box border border-slate-700 rounded-lg overflow-hidden">
+                        <input type="text" id="catalog-search" oninput="filterCatalog()" placeholder="Search modules..." 
+                            class="w-full p-3 border-0 outline-none bg-transparent focus:ring-0">
+                        <div class="filter-controls-row flex items-center">
+                            <div class="type-filter-container flex gap-2">
+                                <button class="type-filter-btn active" data-type="all" onclick="setTypeFilter('all')">
+                                    <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+                                    All
+                                </button>
+                                <button class="type-filter-btn" data-type="book" onclick="setTypeFilter('book')">
+                                    <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+                                    Books
+                                </button>
+                                <button class="type-filter-btn" data-type="podcast" onclick="setTypeFilter('podcast')">
+                                    <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+                                    Podcasts
+                                </button>
+                                <button class="type-filter-btn" data-type="coursera" onclick="setTypeFilter('coursera')">
+                                    <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 14l9-5-9-5-9 5 9 5z"/><path d="M12 14l6.16-3.422a12.083 12.083 0 0 1 .665 6.479A11.952 11.952 0 0 0 12 20.055a11.952 11.952 0 0 0-6.824-2.998 12.078 12.078 0 0 1 .665-6.479L12 14z"/><path d="M12 22v-8"/></svg>
+                                    Courses
+                                </button>
+                            </div>
+                            <button id="hide-completed-btn" onclick="toggleHideCompleted()" class="hide-completed-btn" aria-label="Hide completed modules">
+                                <svg id="hide-completed-icon" class="hide-completed-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                    <circle cx="12" cy="12" r="3"/>
+                                </svg>
+                                <span id="hide-completed-text" class="hide-completed-text">Hide Completed</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="list-container mt-3">
+                        <div id="course-dropdown" class="list-box w-full" role="listbox">
+                            <div class="list-empty">Connecting to vault...</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="begin-btn-wrapper">
+                    <button onclick="handleStart()" class="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-800 text-base shadow-lg shadow-blue-500/30 active:scale-[0.98] transition-all">
+                        Open Vault
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Preview Screen -->
+        <div id="preview-container" class="hidden glass-card rounded-3xl p-8 shadow-xl animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div class="flex items-center gap-3 mb-2">
+                <span id="preview-badge" class="truncate max-w-[200px] text-[10px] font-800 uppercase tracking-widest text-blue-500"></span>
+            </div>
+            <h2 id="preview-title" class="text-2xl font-800 mb-2"></h2>
+            <p id="preview-meta" class="text-xs text-slate-500 dark:text-slate-400 mb-6"></p>
+            
+            <!-- Preview Summary Card -->
+            <div id="preview-summary" class="hidden space-y-4 mb-8">
+                <!-- Chapter Descriptions (optional, hero position) -->
+                <div id="summary-chapter-desc" class="hidden space-y-2"></div>
+                
+                <!-- Inline difficulty prose + time -->
+                <div id="summary-difficulty" class="hidden text-xs font-600 text-slate-500 dark:text-slate-400">
+                    <span id="summary-difficulty-text"></span>
+                    <span class="mx-2">·</span>
+                    <span>⏱ <span id="summary-time">~0 min</span></span>
+                </div>
+                
+                <!-- Progress + Resume (compact, only when there's progress) -->
+                <div id="summary-progress" class="hidden flex items-center gap-2 text-xs font-600 text-slate-500 dark:text-slate-400">
+                    <span class="h-1.5 w-16 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+                        <span id="summary-progress-fill" class="block h-full bg-emerald-500 rounded-full transition-all duration-500" style="width: 0%"></span>
+                    </span>
+                    <span id="summary-progress-text"></span>
+                    <span id="summary-resume" class="hidden text-[10px] font-700 text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded-full"></span>
+                </div>
+            </div>
+            
+            <div class="space-y-6 mb-8">
+                <h2 id="preview-topic-title" class="text-2xl md:text-3xl font-800 text-blue-600 leading-tight hidden"></h2>
+                
+                <div id="preview-content-box" class="p-5 bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500 rounded-r-xl italic text-slate-600 dark:text-slate-300 text-sm hidden"></div>
+                
+                <p id="preview-description-text" class="text-lg font-600 leading-relaxed"></p>
+                
+                <div id="preview-options-bin" class="space-y-3"></div>
+                
+                <div id="preview-chapter-grid" class="hidden flex flex-wrap gap-2 mt-6"></div>
+            </div>
+            
+            <div class="flex gap-3">
+                <button onclick="startFromPreview()" class="flex-1 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-800 shadow-lg shadow-blue-500/30 active:scale-[0.98] transition-all">
+                    Start Quiz
+                </button>
+                <button onclick="cancelPreview()" class="flex-1 py-4 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 rounded-2xl font-800 transition-all">
+                    Cancel
+                </button>
+            </div>
+        </div>
+
+        <div id="quiz-container" class="hidden">
+            <div class="flex items-center gap-3 mb-6">
+                <div class="flex-1 h-2 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+                    <div id="progress-fill" class="h-full bg-blue-500 w-0 transition-all duration-500"></div>
+                </div>
+                <span id="difficulty-badge" class="hidden text-[10px] font-800 uppercase tracking-wider px-2 py-0.5 rounded-full ml-2"></span>
+                <span id="mode-badge" class="hidden text-[10px] font-800 px-2 py-0.5 rounded-full ml-1 bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300"></span>
+                <span id="question-counter" class="text-xs font-700 text-slate-400 whitespace-nowrap">0 / 0</span>
+            </div>
+
+            <div id="lifeline-bar" class="hidden flex justify-end mb-3">
+                <button id="lifeline-btn" onclick="useFiftyFifty()" class="lifeline-btn">
+                    💡 50:50
+                </button>
+            </div>
+
+            <div class="grid grid-cols-3 gap-4 mb-6">
+                <div class="glass-card p-4 rounded-2xl text-center">
+                    <span class="block text-[9px] uppercase tracking-widest font-800 text-slate-500 dark:text-slate-400">Score</span>
+                    <span id="score-val" class="text-xl font-800 text-blue-500">0</span>
+                </div>
+                <div class="glass-card p-4 rounded-2xl text-center">
+                    <span class="block text-[9px] uppercase tracking-widest font-800 text-slate-500 dark:text-slate-400">Streak</span>
+                    <span id="streak-val" class="text-xl font-800 text-orange-500">0</span>
+                </div>
+                <div class="glass-card p-4 rounded-2xl text-center">
+                    <span class="block text-[9px] uppercase tracking-widest font-800 text-slate-500 dark:text-slate-400">Time</span>
+                    <span id="timer-val" class="text-xl font-800 text-slate-600 dark:text-slate-300">00:00</span>
+                </div>
+            </div>
+
+            <div class="glass-card rounded-3xl p-8 shadow-xl relative">
+                <div id="error-overlay" class="hidden text-center py-10">
+                    <div class="text-4xl mb-4">⚠️</div>
+                    <h3 class="text-xl font-bold text-red-500 mb-2">Module Load Failed</h3>
+                    <p id="error-message" class="text-slate-500 mb-6"></p>
+                    <button onclick="window.location.href = 'https://quiz.hasit.in/'" class="px-6 py-2 bg-slate-800 text-white rounded-lg">Return to Menu</button>
+                </div>
+
+                <div id="quiz-flow" class="space-y-6">
+                    <div class="flex justify-between items-center pt-2">
+                        <div class="flex items-center gap-3 min-w-0">
+                            <button onclick="window.location.href = 'https://quiz.hasit.in/'" class="text-xs font-700 text-slate-500 dark:text-slate-400 hover:text-blue-500 transition-colors whitespace-nowrap">&larr; Menu</button>
+                            <span id="module-label" class="text-[10px] font-800 uppercase tracking-widest text-slate-500 dark:text-slate-400 truncate max-w-[140px]">Loading...</span>
+                        </div>
+                        <button onclick="directSkipModule()" class="text-xs font-700 text-slate-500 dark:text-slate-400 hover:text-blue-500 transition-colors whitespace-nowrap">Skip Module ⏭</button>
+                    </div>
+
+                    <h2 id="topic-title" class="text-2xl md:text-3xl font-800 text-blue-600 leading-tight hidden"></h2>
+                    
+                    <div id="content-box" class="p-5 bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500 rounded-r-xl italic text-slate-600 dark:text-slate-300 text-sm hidden"></div>
+                    
+                    <p id="description-text" class="text-lg font-600 leading-relaxed"></p>
+
+                    <div id="options-bin" class="space-y-3"></div>
+
+                    <div id="flashcard-ui" class="hidden space-y-4">
+                        <div class="flashcard-container" id="flashcard-container">
+                            <div class="flashcard-inner">
+                                <div class="flashcard-front">
+                                    <p class="flashcard-label">Concept</p>
+                                    <p id="flashcard-question-text" class="flashcard-concept"></p>
+                                    <p class="flashcard-hint">Tap to reveal</p>
+                                </div>
+                                <div class="flashcard-back">
+                                    <p class="flashcard-label">Definition</p>
+                                    <p id="flashcard-content-text" class="flashcard-content"></p>
+                                    <p id="flashcard-desc-text" class="flashcard-desc"></p>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="flashcard-buttons" class="flex gap-3 opacity-0 translate-y-2 transition-all duration-300">
+                            <button id="flashcard-got-it" class="flex-1 p-4 bg-emerald-500 hover:bg-emerald-600 text-white rounded-2xl font-800 text-center border-0 shadow-lg shadow-emerald-500/20 active:scale-[0.97] transition-all" onclick="flashcardSelfAssess(true)">Got it ✓</button>
+                            <button id="flashcard-missed" class="flex-1 p-4 bg-rose-500 hover:bg-rose-600 text-white rounded-2xl font-800 text-center border-0 shadow-lg shadow-rose-500/20 active:scale-[0.97] transition-all" onclick="flashcardSelfAssess(false)">Missed it ✗</button>
+                        </div>
+                    </div>
+
+                    <div id="fillblank-ui" class="hidden space-y-3">
+                        <input id="fillblank-input" type="text" placeholder="Type your answer..." class="w-full p-4 border-2 border-slate-200 dark:border-slate-700 rounded-2xl font-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 transition-all">
+                        <div class="flex gap-2">
+                            <button id="fillblank-submit" class="flex-1 p-4 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-800 shadow-lg shadow-blue-500/20 active:scale-[0.98] transition-all" onclick="submitFillBlank()">Submit Answer</button>
+                            <button id="fillblank-hint-btn" class="p-4 bg-amber-100 dark:bg-amber-800/40 hover:bg-amber-200 dark:hover:bg-amber-700/60 text-amber-700 dark:text-amber-300 rounded-2xl font-800 text-xl shadow-sm active:scale-[0.95] transition-all" onclick="showHint()" title="Get a hint">💡</button>
+                        </div>
+                        <div id="fillblank-hint" class="hidden text-sm font-500 text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800/60 p-3 rounded-xl"></div>
+                    </div>
+
+                    <div id="explanation" class="hidden p-6 bg-emerald-50 dark:bg-emerald-900/20 rounded-2xl border border-emerald-100 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 animate-in fade-in slide-in-from-top-2 duration-300"></div>
+
+                    <div id="confidence-bar" class="hidden space-y-3 p-4 bg-indigo-50 dark:bg-indigo-900/20 rounded-2xl border border-indigo-100 dark:border-indigo-800">
+                        <p class="text-[10px] font-700 uppercase tracking-widest text-slate-500 dark:text-slate-400">How confident are you?</p>
+                        <div class="flex gap-2">
+                            <button class="conf-btn" data-level="1" onclick="rateConfidence(1)">🤔 Guess</button>
+                            <button class="conf-btn" data-level="2" onclick="rateConfidence(2)">😐 Unsure</button>
+                            <button class="conf-btn" data-level="3" onclick="rateConfidence(3)">💪 Confident</button>
+                        </div>
+                    </div>
+
+                    <div id="ai-section" class="hidden space-y-3">
+                        <p class="text-[10px] font-700 uppercase tracking-widest text-slate-500 dark:text-slate-400">Explain with AI:</p>
+                        <div class="flex flex-wrap gap-2">
+                            <button class="ai-persona-btn" data-persona="child" onclick="askAI('child')">
+                                🧒 Like I'm 10
+                            </button>
+                            <button class="ai-persona-btn" data-persona="deep" onclick="askAI('deep')">
+                                🔬 Deep Dive
+                            </button>
+                            <button class="ai-persona-btn" data-persona="first-principles" onclick="askAI('first-principles')">
+                                🧠 First Principles
+                            </button>
+                            <button class="ai-persona-btn" data-persona="socratic" onclick="askAI('socratic')">
+                                ❓ Socratic Tutor
+                            </button>
+                        </div>
+                        <div id="ai-response" class="hidden p-4 bg-indigo-50 dark:bg-indigo-900/20 rounded-xl border border-indigo-100 dark:border-indigo-800 text-indigo-800 dark:text-indigo-300 text-sm leading-relaxed"></div>
+                        <div id="chat-input-area" class="hidden flex gap-2 items-center mt-3">
+                            <input id="chat-input" type="text" placeholder="Ask a follow-up..." class="flex-1 p-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/20 transition-all disabled:opacity-50">
+                            <button id="chat-send-btn" onclick="sendFollowUp()" class="px-4 py-2.5 bg-indigo-500 hover:bg-indigo-600 disabled:bg-indigo-500/50 text-white font-700 text-sm rounded-xl transition-all disabled:cursor-not-allowed whitespace-nowrap">
+                                Send →
+                            </button>
+                        </div>
+                        <div id="chat-turn-info" class="hidden text-[11px] font-600 text-slate-400 mt-1"></div>
+                    </div>
+
+                    <div id="next-btn-wrapper" class="pt-4 flex justify-end min-h-[60px]">
+                        <button id="next-btn" onclick="handleNextClick()" class="hidden px-8 py-3 bg-slate-900 dark:bg-white dark:text-slate-900 text-white font-800 rounded-xl shadow-lg hover:-translate-y-1 transition-all">
+                            Continue →
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Completion Screen -->
+                <div id="completion-screen" class="hidden text-center py-6 space-y-6">
+                    <div class="text-6xl">🏅</div>
+                    <h2 id="completion-title" class="text-2xl font-800">Module Complete!</h2>
+                    <p id="completion-subtitle" class="text-sm font-600 text-slate-500 dark:text-slate-400 -mt-4"></p>
+                    
+                    <div class="grid grid-cols-2 gap-3 max-w-xs mx-auto">
+                        <div class="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-700">
+                            <div class="text-[10px] font-800 uppercase text-slate-400 mb-1">Score</div>
+                            <div id="final-score-val" class="text-xl font-800 text-blue-500">0</div>
+                        </div>
+                        <div class="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-700">
+                            <div class="text-[10px] font-800 uppercase text-slate-400 mb-1">Time</div>
+                            <div id="final-timer-val" class="text-xl font-800 text-blue-500">00:00</div>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-center gap-6 text-sm">
+                        <div>
+                            <div id="final-correct-val" class="text-2xl font-800 text-emerald-500">0/0</div>
+                            <div class="text-[10px] font-800 uppercase text-slate-400 mt-1">Correct</div>
+                        </div>
+                        <div class="w-px bg-slate-200 dark:bg-slate-700"></div>
+                        <div>
+                            <div id="final-avg-val" class="text-2xl font-800 text-indigo-500">--</div>
+                            <div class="text-[10px] font-800 uppercase text-slate-400 mt-1">Avg / Q</div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-3 pt-4">
+                        <button onclick="downloadScreenshot()" class="w-full p-4 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl font-800 flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 transition-all">
+                            📸 Download Achievement Card
+                        </button>
+                        <div id="transition-actions"></div>
+                        <button onclick="window.location.href = 'https://quiz.hasit.in/'" class="w-full p-4 border-2 border-slate-200 dark:border-slate-700 rounded-xl font-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">
+                            Return to Catalog
+                        </button>
+                    </div>
+                </div>
+            </div>
+    </div>
+
+        <!-- Loading Overlay -->
+        <div id="loading-overlay" class="hidden fixed inset-0 bg-black/30 backdrop-blur-sm z-40 flex items-center justify-center">
+            <div class="bg-white dark:bg-slate-800 rounded-2xl p-8 shadow-2xl flex flex-col items-center gap-4">
+                <div class="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                <p class="text-sm font-600 text-slate-500 dark:text-slate-400">Loading module...</p>
+            </div>
+        </div>
+
+        <footer class="mt-12 text-center text-slate-400 text-xs font-500">
+            <button onclick="toggleUrlInput()" id="url-toggle-btn" class="text-slate-400 hover:text-blue-500 transition-colors cursor-pointer bg-transparent border-0 p-0 text-xs font-500 inline">🔗 Custom Quiz</button> • developed by Hasit Bhatt • <a href="https://github.com/hasitpbhatt/gitquiz" class="text-blue-500 hover:underline" target="_blank" rel="noopener">GitHub</a> • <a href="https://blog.hasit.in/" class="text-blue-500 hover:underline" target="_blank" rel="noopener">Blog</a>
+        </footer>
+    </div>
+
+    <!-- Restored Clean Achievement Template -->
+    <div id="achievement-card-template">
+        <div class="ach-badge">🛡️</div>
+        <div class="ach-title">Course Mastery Achieved</div>
+        
+        <div id="ach-cert-name">Explorer Name</div>
+        
+        <div style="font-size: 16px; opacity: 0.6; margin: 10px 0;">has successfully completed</div>
+        
+        <h2 id="ach-course-name" class="ach-course-name">COURSE TITLE</h2>
+        <div id="ach-module-num" class="ach-module-info">MODULE 001</div>
+
+        <div class="ach-stats-grid">
+            <div class="ach-stat-box">
+                <span id="ach-score" class="ach-stat-val">2,500</span>
+                <span class="ach-stat-lab">Total Points</span>
+            </div>
+            <div class="ach-stat-box">
+                <span id="ach-time" class="ach-stat-val">04:20</span>
+                <span class="ach-stat-lab">Completion Time</span>
+            </div>
+            <div class="ach-stat-box">
+                <span id="ach-date" class="ach-stat-val">MAY 2026</span>
+                <span class="ach-stat-lab">Date Verified</span>
+            </div>
+        </div>
+
+             <div class="ach-footer">
+                 Verified by MindVault • quiz.hasit.in
+             </div>
+    </div>
+
+    <script src="lib/state.js" defer></script>
+    <script src="lib/notifications.js" defer></script>
+    <script src="lib/catalog.js" defer></script>
+    <script src="lib/preview.js" defer></script>
+    <script src="lib/quiz.js" defer></script>
+    <script src="lib/sharing.js" defer></script>
+    <script src="lib/ai.js" defer></script>
+    <script src="lib/main.js" defer></script>
+</body>
+</html>

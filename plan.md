@@ -1,13 +1,14 @@
 # hasit.in Monorepo - Implementation Plan
 
-> **Status**: Typecheck passes (0 errors) and tests pass (27). The "TypeScript compilation errors blocking deployment" blocker is gone. The remaining manual work is setting the Cloudflare secrets, running the remote migrations, and performing the first deploy.
-> **Target**: Complete the production setup and deployment of the unified Cloudflare Worker.
+> **Status**: Local implementation is in progress. The Worker has static app staging for FreeLLM/Games/Fitness/Finance/Quiz, FreeLLM and Games API integration, Finance API routes, and the Quiz AI proxy. Production D1 changes, deployment, DNS cutover, and legacy-service decommissioning remain gated.
+> **Target**: Serve the available package applications through one Worker and Assets pipeline. Interview remains a separate Cloudflare Pages Next.js SSR deployment.
+> Only the root `plan.md` is checked into this worktree. Interview's source and locked plan were inspected in its separate Pages repository; its Pages-local D1/password auth remains unchanged, with no planned shared Worker auth bridge. FreeLLM source is imported under `apps/freellm` with its AGPL-3.0 license; its current schema chain still conflicts with the root legacy migration and is gated.
 
 ---
 
 ## 🎯 Goal
 
-Deploy a unified Cloudflare Worker monorepo hosting all Hasit.in subdomains on a single D1 database with table prefixes, with the TRX Faucet fully functional and the other apps as stubs ready for development.
+Consolidate the available applications behind one Cloudflare Worker and Assets binding, with one D1 database using app prefixes. Five SPAs are planned (FreeLLM, Fitness, Quiz, Games, Finance); all five sources/builds are integrated into the asset pipeline, with Interview remaining separately deployed on Cloudflare Pages.
 
 ---
 
@@ -15,6 +16,12 @@ Deploy a unified Cloudflare Worker monorepo hosting all Hasit.in subdomains on a
 
 ```
 hasit.in/
+├── apps/                               # Imported application sources
+│   ├── freellm/                        # AGPL-3.0 source and upstream schema history
+│   ├── fitness/
+│   ├── finance/
+│   ├── games/
+│   └── quiz/
 ├── .github/workflows/deploy.yml        # Worker CI/CD and opt-in migration job
 ├── .nvmrc                              # Node 22
 ├── package.json                        # Root package and scripts
@@ -30,19 +37,22 @@ hasit.in/
 │   ├── interactions.js
 │   └── ...
 ├── scripts/
+│   ├── build-apps.js                   # Builds/stages available SPAs
 │   ├── check-config.js                 # Configuration guard
 │   ├── dev-keys.js                     # Local development keys
 │   └── migrate.js                      # Sequential D1 migration runner
 ├── migrations/
 │   ├── 001_core_auth.sql               # Core users, apps, sessions
-│   ├── 002_freellm.sql                 # FreeLLM tables
+│   ├── 002_freellm.sql                 # Legacy FreeLLM tables; schema conflict gated
 │   ├── 003_fitness.sql                 # Fitness tables
 │   ├── 004_finance.sql                 # Finance tables
 │   ├── 005_quiz.sql                    # Quiz tables
 │   ├── 006_blog.sql                    # Blog tables
 │   ├── 007_games.sql                   # Games tables
 │   ├── 009_analytics.sql               # Cross-app analytics
-│   └── 010_trx_faucet.sql              # Idempotent TRX faucet tables
+│   ├── 010_trx_faucet.sql              # Idempotent TRX faucet tables
+│   ├── 011_games_platform.sql          # Games API schema
+│   └── 012_freellm_runtime_state.sql   # D1-backed FreeLLM expiring state
 ├── src/
 │   ├── env.d.ts                        # Worker environment and binding types
 │   ├── index.ts                        # Host router and Worker entry point
@@ -51,22 +61,22 @@ hasit.in/
 │   │   │   ├── index.ts
 │   │   │   └── routes/
 │   │   ├── portfolio/                  # Portfolio - complete
-│   │   ├── freellm/                    # Stub
-│   │   ├── fitness/                    # Stub
-│   │   ├── finance/                    # Stub
+│   │   ├── freellm/                    # API mount and D1-backed state adapter
+│   │   ├── fitness/                    # SPA host and health routes
+│   │   ├── finance/                    # Imported market-data APIs
 │   │   ├── blog/                       # Stub
-│   │   ├── quiz/                       # Stub
-│   │   └── games/                      # Stub
+│   │   ├── quiz/                       # Imported AI proxy
+│   │   └── games/                      # Imported Pages API adapter
 │   ├── lib/
 │   │   ├── auth/                       # JWT, Google OAuth, sessions, auth DO
 │   │   ├── db/trx-queries.ts           # TRX queries
 │   │   ├── site-config.ts              # Environment-driven site identifiers
 │   │   ├── faucetpay.ts                # FaucetPay client
-│   │   ├── coingecko.ts                # CoinGecko price cache (KV)
+│   │   ├── coingecko.ts                # CoinGecko edge cache (no KV)
 │   │   ├── host-routing.ts             # Hostname-to-app routing
 │   │   └── validator.ts                # Address validation, Turnstile
 │   ├── middleware/
-│   │   ├── rate-limit.ts               # Per-app rate limiting (KV)
+│   │   ├── rate-limit.ts               # Per-app rate limiting (Durable Object)
 │   │   ├── security.ts                 # Cloudflare country/ASN/IP/hostname bans, NastyHosts check
 │   │   └── session.ts                  # Claim/admin sessions and CSRF
 │   └── types/context.d.ts              # Shared context types
@@ -101,7 +111,7 @@ Migrations run sequentially in filename order:
 # Local development
 npm run db:migrate
 
-# Production (remote; manual)
+# Production (remote; gated pending schema inventory and explicit approval)
 npm run db:migrate:remote
 ```
 
@@ -110,7 +120,7 @@ npm run db:migrate:remote
 | File | Tables | Dependencies |
 |------|--------|--------------|
 | `001_core_auth.sql` | `core_users`, `core_user_apps`, `core_sessions` | None |
-| `002_freellm.sql` | `freellm_validations`, `freellm_api_keys` | `core_users` |
+| `002_freellm.sql` | Legacy `freellm_validations`, `freellm_api_keys` | `core_users`; conflicts with upstream FreeLLM schema |
 | `003_fitness.sql` | `fitness_workouts`, `fitness_goals`, `fitness_streaks` | `core_users` |
 | `004_finance.sql` | `finance_portfolios`, `finance_holdings`, `finance_transactions` | `core_users` |
 | `005_quiz.sql` | `quiz_quizzes`, `quiz_questions`, `quiz_attempts` | `core_users` |
@@ -118,6 +128,10 @@ npm run db:migrate:remote
 | `007_games.sql` | `games_scores` | `core_users` |
 | `009_analytics.sql` | `analytics_events` | `core_users` |
 | `010_trx_faucet.sql` | TRX settings, claims, IPs, referrals, pages, locks, `trx_ProxyCheck`, `trx_NH_Log` | None |
+| `011_games_platform.sql` | Prefixed tables used by imported Games Pages handlers | None |
+| `012_freellm_runtime_state.sql` | D1-backed FreeLLM sessions, OAuth state, rate-limit counters | None |
+
+FreeLLM's imported current schema is maintained in `apps/freellm/migrations/`; the root `002_freellm.sql` predates it and creates an incompatible `freellm_api_keys` table. Do not apply either schema chain to production until a read-only schema inventory and data-preserving migration plan resolve the conflict. Migration 012 is separate and has not been applied remotely.
 
 Migration 008 was deleted with DevCheap. Migration 010 is idempotent: it uses `CREATE TABLE IF NOT EXISTS`, `CREATE INDEX IF NOT EXISTS`, and `INSERT OR IGNORE`, so it can safely run against a database where some TRX tables already exist.
 
@@ -127,7 +141,7 @@ Migration 008 was deleted with DevCheap. Migration 010 is idempotent: it uses `C
 npx wrangler d1 execute hasit-in --remote --command "SELECT name FROM sqlite_master WHERE type='table' AND (name LIKE 'core_%' OR name LIKE 'freellm_%' OR name LIKE 'fitness_%' OR name LIKE 'finance_%' OR name LIKE 'quiz_%' OR name LIKE 'blog_%' OR name LIKE 'games_%' OR name LIKE 'trx_%' OR name LIKE 'analytics_%') ORDER BY name;"
 ```
 
-Running remote migrations is intentionally separate from deployment.
+Do not run the remote command until the FreeLLM schema conflict is resolved through a read-only D1 inventory and an explicitly approved data-preserving migration plan.
 
 ---
 
@@ -135,24 +149,23 @@ Running remote migrations is intentionally separate from deployment.
 
 ### Deployment Target: Cloudflare Worker
 
-This project is a **Cloudflare Worker**, not Cloudflare Pages. `wrangler.toml` has `main = "src/index.ts"`, and the Worker owns the D1, KV, Durable Object, route, and asset configuration.
+This project is a **Cloudflare Worker**, not Cloudflare Pages. `wrangler.toml` has `main = "src/index.ts"`, and the Worker owns the D1, Durable Object, route, and asset configuration. Interview remains a separate Cloudflare Pages SSR deployment.
 
 Using `cloudflare/pages-action@v1` would have published the repository root as a static site with no Worker behind it. The deployment must use `wrangler deploy` or `cloudflare/wrangler-action@v3`.
 
 The Worker configuration includes:
 
 - One D1 binding (`DB`)
-- Two KV namespace bindings (`KV` and `RATE_LIMIT_KV`)
 - The `AUTH_STATE` Durable Object binding and its `[[migrations]]` block
+- The `RATE_LIMITER` Durable Object binding
 - An `[assets]` block with `directory = "./public"` and `binding = "ASSETS"`
-- `routes` entries using `custom_domain = true` for each Hasit.in hostname
+- `routes` entries using `custom_domain = true` for configured hostnames. `trx.hasit.in` and `blog.hasit.in` remain excluded pending route-ownership checks.
 - A `[vars]` block for public environment configuration
+- No request-path KV binding: the CoinGecko price cache uses the Cache API and isolate-level request coalescing.
 
 ### Static Assets
 
-Files in `public/` are served through the `[assets]` binding. Requests to static assets are free and unlimited and do not count against the Workers request quota.
-
-The old hand-rolled `src/lib/static-assets.ts` pipeline and its `build-assets.js` generator have been deleted. The former pipeline served every CSS and JavaScript request through the Worker, so each asset hit counted against the 100,000 requests/day free limit. Cloudflare's assets binding avoids that quota cost.
+`npm run build:apps` builds FreeLLM, Games, and Fitness, and stages the available Finance and Quiz static files under `public/apps/`. Cloudflare serves those files through the `[assets]` binding, with the Worker redirecting each SPA host root to its app directory. FreeLLM API and `/v1` handlers are mounted in the Worker; its session, OAuth, and rate-limit state uses D1 rather than KV. The upstream business schema remains gated by the legacy migration conflict. Interview is intentionally excluded from Worker assets and remains Pages SSR with its Pages-local D1/password auth.
 
 ### DevCheap Removal
 
@@ -174,6 +187,7 @@ npx wrangler secret put FAUCETPAY_API_KEY
 npx wrangler secret put JWT_PRIVATE_KEY
 npx wrangler secret put JWT_PUBLIC_KEY
 npx wrangler secret put GOOGLE_CLIENT_SECRET
+npx wrangler secret put MISTRAL_API_KEY
 npx wrangler secret put ADMIN_PASSWORD   # Only needed until the first admin login
 ```
 
@@ -242,8 +256,9 @@ npm run dev
 | `npm run db:migrate:local` | Runs migrations against local D1 |
 | `npm run db:migrate:remote` | Runs migrations against remote D1 |
 | `npm run check:config` | Checks configuration invariants |
+| `npm run build:apps` | Builds and stages the available SPA assets |
 | `npm run typecheck` | Runs TypeScript; `pretypecheck` runs the config check |
-| `npm test` | Runs the Node built-in test runner; 27 tests currently pass |
+| `npm test` | Runs the Node built-in test runner; tests include cache, route, Games, Finance, and Quiz integration checks |
 | `npm run lint` | Runs ESLint on `src/` |
 | `npm run check` | Runs typecheck, tests, and the deployment dry run |
 
@@ -277,7 +292,7 @@ A deploy must never be able to mutate the D1 schema, so a normal push to `main` 
 
 | Secret | Description |
 |--------|-------------|
-| `CLOUDFLARE_API_TOKEN` | Cloudflare API token with Workers, D1, KV, and Durable Objects permissions |
+| `CLOUDFLARE_API_TOKEN` | Cloudflare API token with Workers, D1, and Durable Objects permissions |
 | `CLOUDFLARE_ACCOUNT_ID` | Cloudflare account ID |
 
 ---
@@ -287,14 +302,16 @@ A deploy must never be able to mutate the D1 schema, so a normal push to `main` 
 ### Automated Checks
 
 - [x] `npm run check:config` passes
-- [x] `npm run lint` passes (`.eslintrc.cjs` configures ESLint for TypeScript)
-- [x] `npm run typecheck` passes with 0 errors
-- [x] `npm test` passes all 27 tests
-- [x] `npm run deploy:dry` succeeds
+- [x] Root `npm run typecheck` passes after current Worker integrations
+- [x] Root `npm test` passes (49 tests after current integrations)
+- [x] Root `npm run lint` passes
+- [x] Games typecheck and production build pass
+- [x] Fitness static export and typecheck pass
+- [x] `npm run deploy:dry` succeeds after Finance/Quiz API integrations
 
 ### Manual Pre-Deployment Checks
 
-- [x] KV namespace IDs in `wrangler.toml` are confirmed against the real Cloudflare account (`trx_faucet`, `trx_faucet_rate_limit`)
+- [ ] Verify `trx.hasit.in` and `blog.hasit.in` route ownership before adding them to `wrangler.toml`
 - [ ] All required Worker secrets are set
 - [ ] JWT keys are generated and set
 - [ ] Google OAuth is configured (redirect URI: `https://auth.hasit.in/callback`)
@@ -320,14 +337,14 @@ A deploy must never be able to mutate the D1 schema, so a normal push to `main` 
 |------|-------------------|
 | `hasit.in` | Portfolio HTML |
 | `www.hasit.in` | Portfolio HTML |
-| `trx.hasit.in` | HTML faucet page |
+| `trx.hasit.in` | HTML faucet page (after route-ownership check) |
 | `trx2.hasit.in` | HTML faucet page |
-| `freellm.hasit.in` | `{ "name": "FreeLLM", "status": "coming soon" }` |
-| `fitness.hasit.in` | `{ "name": "Fitness", "status": "coming soon" }` |
-| `finance.hasit.in` | `{ "name": "Finance", "status": "coming soon" }` |
+| `freellm.hasit.in` | FreeLLM SPA; `/api/*` and `/v1/*` use mounted Worker handlers |
+| `fitness.hasit.in` | Fitness static app |
+| `finance.hasit.in` | Finance static app and API |
 | `blog.hasit.in` | `{ "name": "Blog", "status": "coming soon" }` |
-| `quiz.hasit.in` | `{ "name": "Quiz", "status": "coming soon" }` |
-| `games.hasit.in` | `{ "name": "Games", "status": "coming soon" }` |
+| `quiz.hasit.in` | Quiz static app and AI proxy |
+| `games.hasit.in` | Games static app and API |
 | `auth.hasit.in/health` | `{ "status": "ok", "service": "auth" }` |
 
 ---
@@ -336,9 +353,8 @@ A deploy must never be able to mutate the D1 schema, so a normal push to `main` 
 
 | Issue | Workaround |
 |-------|------------|
-| KV namespace IDs | Point at `trx_faucet` and `trx_faucet_rate_limit`; keep them in sync if the namespaces are recreated |
 | D1 100MB limit | Monitor size; archive old claim logs |
-| KV 25MB limit | Price cache is tiny (~1KB) |
+| Cloudflare KV limit | No request-path KV reads/writes remain; keep the 1,000 calls/day cap as a constraint for future changes |
 | Turnstile localhost | Use `localhost` in the Turnstile dashboard |
 | Google OAuth localhost | Add `http://localhost:8787` to authorized redirect URIs |
 | ES256 key format | Must be PKCS8 (private) / SPKI (public) PEM |
@@ -348,11 +364,12 @@ A deploy must never be able to mutate the D1 schema, so a normal push to `main` 
 
 ## 📝 Remaining Manual Steps
 
-1. Confirm the remaining Cloudflare account resources (D1 id is already correct).
-2. Set the Cloudflare Worker secrets, including `ADMIN_PASSWORD` for the first login on a fresh database.
-3. Run `npm run db:migrate:remote`, or use the workflow's opt-in manual migration job.
-4. Perform and verify the first deployment.
-5. Run the post-deployment checks.
+1. Verify ownership and route availability for `trx.hasit.in` and `blog.hasit.in`.
+2. Reconcile the legacy root FreeLLM schema with the imported upstream migration chain; inspect the actual D1 schema read-only and prepare a data-preserving migration plan before any D1 changes.
+3. Keep Interview on Pages with its planned Pages-local D1/password auth; add a shared Worker API only if an explicit plan specifies one.
+4. Configure the required Worker secrets, including FreeLLM's `ENCRYPTION_KEY`, email/OAuth settings, `ADMIN_PASSWORD` on a fresh database, and `MISTRAL_API_KEY` for AI features.
+5. Review and apply production D1 migrations only after an explicit production change window.
+6. Perform deployment, DNS cutover, and legacy-service retirement only after explicit approval.
 
 ---
 
@@ -360,7 +377,7 @@ A deploy must never be able to mutate the D1 schema, so a normal push to `main` 
 
 **Definition of Done**:
 
-1. **Automated:** `npm run typecheck` passes with 0 errors, and `npm test` passes all 27 tests.
+1. **Automated:** `npm run typecheck` passes with 0 errors, and `npm test` passes.
 2. **Manual:** `npm run dev` starts the Worker on `localhost:8787` with the TRX Faucet as the default app.
 3. **Manual:** All configured Hasit.in routes respond correctly.
 4. **Manual:** The TRX faucet claim flow works end-to-end.
