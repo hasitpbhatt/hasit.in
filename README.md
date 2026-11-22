@@ -1,6 +1,8 @@
 # hasit.in — Unified Monorepo
 
-All Hasit.in subdomains are served by one Cloudflare Worker, backed by one D1 database and deployed as one Worker.
+The repository is being consolidated behind one Cloudflare Worker and Assets binding. FreeLLM, Fitness, Quiz, Games, and Finance are staged through the shared Assets pipeline; the Worker also mounts FreeLLM's API handlers and routes their expiring session/OAuth/rate-limit state through D1. Production deployment, D1 changes, DNS cutover, and legacy-service removal have not been performed.
+
+`trx.hasit.in` and `blog.hasit.in` are handled by the hostname router but remain absent from `wrangler.toml` pending ownership checks. FreeLLM's current upstream schema still needs reconciliation with the root legacy FreeLLM migration before any D1 migration or production use. Interview stays on its separate Cloudflare Pages Next.js SSR deployment; its own plan retains Pages-local D1/password auth, so it is not routed through this Worker's Google OAuth service.
 
 ## Architecture
 
@@ -13,10 +15,10 @@ All Hasit.in subdomains are served by one Cloudflare Worker, backed by one D1 da
 │  • trx.hasit.in, trx2.hasit.in → TRX Faucet                │
 │  • freellm.hasit.in    → LLM API Validator                  │
 │  • fitness.hasit.in    → Workout Tracker                    │
-│  • finance.hasit.in    → Portfolio Tracker                  │
+│  • finance.hasit.in    → Finance research app                │
 │  • blog.hasit.in       → Blog/Articles                      │
-│  • quiz.hasit.in       → Quiz Platform                      │
-│  • games.hasit.in      → Browser Games                      │
+│  • quiz.hasit.in       → Quiz Platform + AI proxy            │
+│  • games.hasit.in      → Browser Games + API                 │
 │  • auth.hasit.in       → Shared OAuth + JWT                 │
 ├─────────────────────────────────────────────────────────────┤
 │  Cloudflare static assets (public/) served directly         │
@@ -56,17 +58,23 @@ npm run deploy
 
 ```
 hasit.in/
+├── apps/                         # Imported SPA/application source
+│   ├── fitness/
+│   ├── freellm/                    # AGPL-3.0 app source and upstream schema history
+│   ├── finance/
+│   ├── games/
+│   └── quiz/
 ├── src/
 │   ├── index.ts                 # Host router (routes by hostname)
 │   ├── apps/
 │   │   ├── trx/                 # TRX Faucet
 │   │   ├── portfolio/           # Personal portfolio (hasit.in)
-│   │   ├── freellm/             # LLM API Validator (stub)
-│   │   ├── fitness/             # Fitness Tracker (stub)
-│   │   ├── finance/             # Finance Tracker (stub)
+│   │   ├── freellm/             # FreeLLM API mount and D1-backed expiring state
+│   │   ├── fitness/             # Fitness host and health routes
+│   │   ├── finance/             # Finance API handlers
 │   │   ├── blog/                # Blog (stub)
-│   │   ├── quiz/                # Quiz Platform (stub)
-│   │   └── games/               # Games (stub)
+│   │   ├── quiz/                # Quiz AI proxy
+│   │   └── games/               # Games Pages API adapter
 │   ├── lib/
 │   │   ├── auth/                # Shared auth: JWT, Google OAuth, sessions
 │   │   ├── db/
@@ -75,24 +83,23 @@ hasit.in/
 │   │   ├── site-config.ts       # GA4, AdSense, and Turnstile site config
 │   │   ├── html.ts              # HTML escaping helper
 │   │   ├── faucetpay.ts         # FaucetPay client
-│   │   ├── coingecko.ts         # CoinGecko price cache (KV)
+│   │   ├── coingecko.ts         # CoinGecko cache (Cache API; no per-request KV)
 │   │   └── validator.ts         # Address validation, Turnstile, rate limits
 │   └── middleware/
-│       ├── rate-limit.ts        # Per-app rate limiting (KV)
+│       ├── rate-limit.ts        # Per-app rate limiting (Durable Object)
 │       ├── security.ts          # VPN/proxy checks, ban lists
 │       └── session.ts           # Claim/admin sessions, CSRF, flash
 ├── migrations/                  # Numbered SQL migrations
 ├── public/                      # Static assets served by Cloudflare
+├── scripts/build-apps.js        # Builds/stages available SPAs
 ├── scripts/migrate.js           # Migration runner
-├── wrangler.toml                # Worker, D1, KV, assets, and public vars
+├── wrangler.toml                # Worker, D1, Durable Objects, Assets, and vars
 └── package.json
 ```
 
 ## Static Assets
 
-Static files live in `public/`. Cloudflare serves them directly through the `[assets]` binding configured in `wrangler.toml`; requests for matching assets do not invoke the Worker.
-
-There is no asset build step and no inlined asset bundle. Add or edit files in `public/` as-is. `public/_headers` controls cache headers and other response headers for those assets.
+Run `npm run build:apps` to build FreeLLM, Games, and Fitness and stage the available Finance and Quiz static files under `public/apps/`. Cloudflare serves those files through the `[assets]` binding; the Worker redirects each SPA host root to its app directory. FreeLLM's BrowserRouter base and deep links are scoped under `/apps/freellm/`. `public/_headers` controls cache headers and other response headers.
 
 ## Database (Single D1: `hasit-in`)
 
@@ -100,22 +107,22 @@ There is no asset build step and no inlined asset bundle. Add or edit files in `
 |--------|--------|---------|
 | `core_` | `users`, `user_apps`, `sessions` | Shared identity and auth |
 | `trx_` | `settings`, `claimlog`, `ips`, `addresses`, `refs`, `pages`, `locks`, `ProxyCheck`, `NH_Log` | TRX Faucet and security checks |
-| `freellm_` | `validations`, `api_keys` | LLM Validator |
+| `freellm_` | FreeLLM user, auth, usage, key, and service tables; `runtime_state` | FreeLLM API and expiring runtime state |
 | `fitness_` | `workouts`, `goals`, `streaks` | Fitness Tracker |
 | `finance_` | `portfolios`, `holdings`, `transactions` | Finance Tracker |
 | `quiz_` | `quizzes`, `questions`, `attempts` | Quiz Platform |
 | `blog_` | `posts`, `tags`, `post_tags` | Blog |
-| `games_` | `scores` | Games |
+| `games_` | Users, sessions, score events, payouts, promos, rate limits | Games |
 | `analytics_` | `events` | Cross-app analytics |
 
-The table names in this table are suffixes of their prefix; for example, `core_users` and `analytics_events`.
+The table names in this table are suffixes of their prefix; for example, `core_users` and `analytics_events`. Root migration `002_freellm.sql` is a legacy schema and conflicts with FreeLLM's current upstream migration history; reconcile the actual D1 schema before applying either schema chain. Migration `012_freellm_runtime_state.sql` creates the D1-backed session/OAuth/rate-limit store but has not been applied to production. Games' imported Pages handlers rewrite their supported generic table names to `games_*`; migration `011_games_platform.sql` also remains unapplied to production. Finance currently serves read-only market-data APIs; its planned `finance_*` persistence is not wired to the imported app.
 
 ### Migrations
 
 | Migration | Contents |
 |-----------|----------|
 | `001_core_auth.sql` | Core authentication tables |
-| `002_freellm.sql` | FreeLLM tables |
+| `002_freellm.sql` | Legacy FreeLLM tables; conflicts with the current upstream schema |
 | `003_fitness.sql` | Fitness tables |
 | `004_finance.sql` | Finance tables |
 | `005_quiz.sql` | Quiz tables |
@@ -123,18 +130,21 @@ The table names in this table are suffixes of their prefix; for example, `core_u
 | `007_games.sql` | Games tables |
 | `009_analytics.sql` | Cross-app analytics table |
 | `010_trx_faucet.sql` | TRX faucet tables; idempotent, and creates or ensures the TRX tables including `trx_ProxyCheck` and `trx_NH_Log` required by the security middleware |
+| `011_games_platform.sql` | Prefixed tables used by the imported Games Pages handlers |
+| `012_freellm_runtime_state.sql` | D1-backed expiring FreeLLM sessions, OAuth state, and rate-limit counters |
 
-Run migrations against local D1 first, then against the remote database when deploying:
+The root migration runner does not apply the upstream FreeLLM schema chain in `apps/freellm/migrations/`. Run the root migrations locally only after reviewing the schema conflict. Do not run remote migrations until the existing D1 schema has been inventoried and a data-preserving plan is explicitly approved.
 
 ```bash
 # Local
 npm run db:migrate
 
-# Remote (production)
-npm run db:migrate:remote
+# Production migrations are intentionally gated; do not run remotely yet.
 ```
 
 ## Authentication
+
+FreeLLM retains its own account/session model. Configure `ENCRYPTION_KEY` for its key vault and `RESEND_API_KEY` for verification email; Google OAuth must allow `https://freellm.hasit.in/api/auth/google/callback`. The `freellm_runtime_state` migration must be applied before using those API flows.
 
 The `auth.hasit.in` Durable Object handles:
 - Google OAuth callback
@@ -171,6 +181,7 @@ GA4 and AdSense identifiers are not hardcoded in page templates. `src/lib/site-c
 | `JWT_PRIVATE_KEY` | ES256 PEM private key |
 | `JWT_PUBLIC_KEY` | ES256 PEM public key |
 | `GOOGLE_CLIENT_SECRET` | Google OAuth client secret |
+| `MISTRAL_API_KEY` | Quiz AI proxy and Finance research narrative |
 | `ADMIN_PASSWORD` | Only needed until the admin password has been stored in `trx_settings`; it bootstraps the first login |
 
 Set each secret with a command such as:
@@ -216,6 +227,7 @@ Use `npm run dev:keys` to generate a local ES256 key pair in `.dev.vars` before 
 | `npm run db:migrate` | Apply migrations to local D1 |
 | `npm run db:migrate:remote` | Apply migrations to remote D1 |
 | `npm run check:config` | Validate public configuration and `public/ads.txt` |
+| `npm run build:apps` | Build and stage the available SPA assets under `public/apps/` |
 
 ## Adding a New App
 
@@ -243,15 +255,18 @@ npm run deploy:dry
 | Hostname | App | Status |
 |----------|-----|--------|
 | `hasit.in`, `www.hasit.in` | Portfolio | ✅ Built |
-| `trx.hasit.in`, `trx2.hasit.in` | TRX Faucet | ✅ Built |
-| `freellm.hasit.in` | LLM Validator | 🔲 Stub |
-| `fitness.hasit.in` | Fitness | 🔲 Stub |
-| `finance.hasit.in` | Finance | 🔲 Stub |
-| `blog.hasit.in` | Blog | 🔲 Stub |
-| `quiz.hasit.in` | Quiz | 🔲 Stub |
-| `games.hasit.in` | Games | 🔲 Stub |
+| `trx2.hasit.in` | TRX Faucet | ✅ Configured |
+| `trx.hasit.in` | TRX Faucet | ⏸ Route ownership check required |
+| `freellm.hasit.in` | FreeLLM | ✅ SPA and Worker API mounted; D1 schema reconciliation gated |
+| `fitness.hasit.in` | Fitness | ✅ Static build available |
+| `finance.hasit.in` | Finance | ✅ Static app and API routes available |
+| `blog.hasit.in` | Blog | ⏸ Route ownership check required |
+| `quiz.hasit.in` | Quiz | ✅ Static app and AI proxy available |
+| `games.hasit.in` | Games | ✅ Static app and API routes available |
 | `auth.hasit.in` | Auth Durable Object | ✅ Built |
 
 ## License
+
+The imported FreeLLM source is licensed under AGPL-3.0; retain its notices and `apps/freellm/LICENSE` when distributing or operating the integrated application.
 
 MIT

@@ -3,6 +3,7 @@ main = "src/index.ts"
 compatibility_date = "2026-05-03"
 
 # One Worker, every subdomain. custom_domain provisions DNS and TLS.
+# interview.hasit.in remains on its separate Cloudflare Pages SSR deployment.
 routes = [
   { pattern = "hasit.in", custom_domain = true },
   { pattern = "www.hasit.in", custom_domain = true },
@@ -23,16 +24,12 @@ routes = [
 [assets]
 directory = "./public"
 binding = "ASSETS"
+run_worker_first = ["/", "/api/*", "/v1/*", "/health", "/auth/*", "/admin/*"]
 
 [[d1_databases]]
 binding = "DB"
 database_name = "hasit-in"
 database_id = "ea3f54ed-75e6-4a45-b7b9-d80509efe4e8"
-
-[[kv_namespaces]]
-binding = "KV"
-id = "a59ad55b024f424981ad02050d416032"
-preview_id = "a59ad55b024f424981ad02050d416032"
 
 [[durable_objects.bindings]]
 name = "AUTH_STATE"
@@ -64,3 +61,8 @@ GOOGLE_REDIRECT_URI = "https://auth.hasit.in/callback"
 # JWT_PRIVATE_KEY (ES256 PEM)
 # JWT_PUBLIC_KEY (ES256 PEM)
 # GOOGLE_CLIENT_SECRET
+# MISTRAL_API_KEY
+# ENCRYPTION_KEY (FreeLLM key-vault encryption)
+# RESEND_API_KEY (FreeLLM email verification)
+# ADMIN_EMAIL, MAIL_FROM, GOOGLE_OAUTH_CLIENT_ID, GOOGLE_OAUTH_CLIENT_SECRET
+# ANTIGRAVITY_OAUTH_CLIENT_ID, ANTIGRAVITY_OAUTH_CLIENT_SECRET (optional)
