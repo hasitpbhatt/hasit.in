@@ -10,4 +10,4 @@
 /apps/freellm/keys /apps/freellm/index.html 200
 /apps/freellm/admin /apps/freellm/index.html 200
 /apps/freellm/verify-email /apps/freellm/index.html 200
-/apps/freellm/r/* /apps/freellm/index.html 200
+/apps/freellm/r/ /apps/freellm/index.html 200
