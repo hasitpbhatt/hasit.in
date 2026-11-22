@@ -25,8 +25,6 @@ export type Bindings = {
   /** BYOK OAuth client credentials — checked before any bundled fallback. */
   GOOGLE_OAUTH_CLIENT_ID?: string
   GOOGLE_OAUTH_CLIENT_SECRET?: string
-  ANTIGRAVITY_OAUTH_CLIENT_ID?: string
-  ANTIGRAVITY_OAUTH_CLIENT_SECRET?: string
   PUBLIC_ORIGIN?: string
   APP_BASE_PATH?: string
 }

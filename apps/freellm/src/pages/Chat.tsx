@@ -4,7 +4,7 @@ import { MAX_WIRE_IMAGES, streamChat, toWireMessages, type ChatSseEvent } from '
 import { api, normalizeCatalogModel, type CatalogModel } from '../lib/api'
 import { fileToImageDataUrl } from '../lib/image'
 import { useAuth } from '../lib/useAuth'
-import { Button, Card, Credits, Select } from '../components/ui'
+import { Button, Card, Credits, Select, AdSlot } from '../components/ui'
 
 type Model = CatalogModel
 
@@ -550,33 +550,38 @@ export default function Chat() {
           <h1 className="text-lg font-semibold">Chat</h1>
           <div className="flex flex-col gap-1">
             <div className="flex items-center gap-2" role="radiogroup" aria-label="Chat mode">
-              <button
-                role="radio"
-                aria-checked={mode === 'pool'}
-                onClick={() => { setMode('pool'); setSelectedKeyId('') }}
-                className={`px-3 py-1.5 text-xs font-medium rounded transition-colors ${
-                  mode === 'pool'
-                    ? 'bg-accent text-white border-accent'
-                    : 'bg-surface-2 text-content hover:bg-surface-3 border-transparent'
-                }`}
-              >
-                The Pool
-              </button>
-              <button
-                role="radio"
-                aria-checked={mode === 'byok'}
-                onClick={() => setMode('byok')}
-                className={`px-3 py-1.5 text-xs font-medium rounded transition-colors ${
-                  mode === 'byok'
-                    ? 'bg-accent text-white border-accent'
-                    : 'bg-surface-2 text-content hover:bg-surface-3 border-transparent'
-                }`}
-              >
-                Your Key
-              </button>
-            </div>
-            <p className="text-xs text-muted">{mode === 'pool' ? 'Uses credits (1 credit = 1 token). Earn more on Earn.' : 'Uses your own API key.'}</p>
-          </div>
+                    <button
+                      role="radio"
+                      aria-checked={mode === 'pool'}
+                      onClick={() => { setMode('pool'); setSelectedKeyId('') }}
+                      className={`px-3 py-1.5 text-xs font-medium rounded transition-colors ${
+                        mode === 'pool'
+                          ? 'bg-accent text-white border-accent'
+                          : 'bg-surface-2 text-content hover:bg-surface-3 border-transparent'
+                      }`}
+                    >
+                      The Pool
+                    </button>
+                    <button
+                      role="radio"
+                      aria-checked={mode === 'byok'}
+                      onClick={() => setMode('byok')}
+                      className={`px-3 py-1.5 text-xs font-medium rounded transition-colors ${
+                        mode === 'byok'
+                          ? 'bg-accent text-white border-accent'
+                          : 'bg-surface-2 text-content hover:bg-surface-3 border-transparent'
+                      }`}
+                    >
+                      Your Key
+                    </button>
+                  </div>
+                  <p className="text-xs text-muted">{mode === 'pool' ? 'Uses credits (1 credit = 1 token). Earn more on Earn.' : 'Uses your own API key.'}</p>
+                </div>
+              </div>
+
+        {/* Ad slot in header on mobile */}
+        <div className="w-full lg:hidden" aria-label="Advertisement">
+          <AdSlot slot="YOUR_CHAT_MOBILE_AD_SLOT_ID" format="horizontal" className="mx-auto" />
         </div>
 
         <div className="flex items-center gap-3 lg:ml-auto">
@@ -767,6 +772,11 @@ export default function Chat() {
               Jump to latest ↓
             </button>
           )}
+
+                    {/* Ad slot between messages and composer - desktop */}
+                    <div className="hidden lg:block px-4 py-2" aria-label="Advertisement">
+                      <AdSlot slot="YOUR_CHAT_DESKTOP_AD_SLOT_ID" format="horizontal" className="mx-auto max-w-2xl" />
+                    </div>
         </div>
 
         {/* Banner */}

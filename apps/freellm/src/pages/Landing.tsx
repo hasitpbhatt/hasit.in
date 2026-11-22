@@ -1,6 +1,6 @@
 import { Link, Navigate } from "react-router-dom"
 import { useAuth } from "../lib/useAuth"
-import { Card } from "../components/ui"
+import { Card, AdSlot } from "../components/ui"
 
 export default function Landing() {
   const { user, loading } = useAuth()
@@ -38,7 +38,14 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Two doors */}
+      {/* Ad slot - Hero banner */}
+            <section className="border-t border-line bg-surface/30 py-4" aria-label="Advertisement">
+              <div className="mx-auto max-w-4xl px-4">
+                <AdSlot slot="YOUR_HERO_AD_SLOT_ID" format="horizontal" className="mx-auto" />
+              </div>
+            </section>
+
+            {/* Two doors */}
       <section className="border-t border-line bg-surface/30">
         <div className="mx-auto max-w-4xl px-4 py-12">
           <div className="grid md:grid-cols-2 gap-8">
@@ -173,7 +180,14 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* How you earn — no games, real contribution */}
+      {/* Ad slot - Mid content */}
+            <section className="border-t border-line bg-surface/30 py-4" aria-label="Advertisement">
+              <div className="mx-auto max-w-4xl px-4">
+                <AdSlot slot="YOUR_MID_CONTENT_AD_SLOT_ID" format="rectangle" className="mx-auto" />
+              </div>
+            </section>
+
+            {/* How you earn — no games, real contribution */}
       <section className="border-t border-line bg-bg">
         <div className="mx-auto max-w-4xl px-4 py-16">
           <div className="text-center mb-12">

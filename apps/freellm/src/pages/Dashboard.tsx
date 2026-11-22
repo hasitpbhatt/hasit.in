@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { api } from '../lib/api'
 import { useAuth } from '../lib/useAuth'
-import { Button, Card, CardHeader } from '../components/ui'
+import { Button, Card, CardHeader, AdSlot } from '../components/ui'
 import { formatDelta } from '../lib/format'
 
 type LedgerEntry = { delta: number; reason: string; meta: Record<string, unknown> | null; created_at: number }
@@ -161,7 +161,12 @@ export default function Dashboard() {
         </Card>
       </div>
 
-      {/* First-run checklist — teaches the model through action */}
+      {/* Ad slot - Top of dashboard */}
+            <div className="py-4" aria-label="Advertisement">
+              <AdSlot slot="YOUR_DASHBOARD_TOP_AD_SLOT_ID" format="horizontal" className="mx-auto max-w-4xl" />
+            </div>
+
+            {/* First-run checklist — teaches the model through action */}
       <Card>
         <CardHeader title="Getting started" action={<span className="num text-xs text-muted">{completed}/4</span>} />
         <div className="flex flex-col divide-y divide-line">
@@ -182,6 +187,11 @@ export default function Dashboard() {
           ))}
         </div>
       </Card>
+
+            {/* Ad slot - Before recent activity */}
+            <div className="py-4" aria-label="Advertisement">
+              <AdSlot slot="YOUR_DASHBOARD_MID_AD_SLOT_ID" format="rectangle" className="mx-auto max-w-4xl" />
+            </div>
 
       {/* Recent activity */}
       <Card>

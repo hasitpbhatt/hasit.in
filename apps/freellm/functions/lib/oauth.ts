@@ -178,38 +178,6 @@ export const OAUTH_PROVIDERS: Record<string, OAuthProviderConfig> = {
     },
   },
 
-  antigravity: {
-    id: 'antigravity',
-    name: 'Antigravity',
-    flowType: 'authorization_code',
-    authorizeUrl: 'https://accounts.google.com/o/oauth2/v2/auth',
-    tokenUrl: 'https://oauth2.googleapis.com/token',
-    // Credentials live in env (ANTIGRAVITY_OAUTH_CLIENT_ID /
-    // ANTIGRAVITY_OAUTH_CLIENT_SECRET) — same rationale as google above.
-    clientIdEnv: 'ANTIGRAVITY_OAUTH_CLIENT_ID',
-    clientSecretEnv: 'ANTIGRAVITY_OAUTH_CLIENT_SECRET',
-    scope: [
-      'https://www.googleapis.com/auth/cloud-platform',
-      'https://www.googleapis.com/auth/userinfo.email',
-      'https://www.googleapis.com/auth/userinfo.profile',
-      'https://www.googleapis.com/auth/cclog',
-      'https://www.googleapis.com/auth/experimentsandconfigs',
-    ].join(' '),
-    refreshable: true,
-    chatReady: false,
-    vaultFill: {
-      // NOTE: the IDE endpoint speaks a custom v1internal format our generic
-      // OpenAI dialer cannot drive yet — the row captures the credential
-      // correctly (Google OAuth token, never revealable); chat needs a future
-      // antigravity adapter. Repoint base_url at the Gemini OpenAI endpoint
-      // to chat with this token today.
-      baseUrl: 'https://daily-cloudcode-pa.googleapis.com',
-      upstreamModel: 'gemini-3.8-flash',
-      protocol: 'openai',
-      label: 'Antigravity',
-    },
-  },
-
   grok: {
     id: 'grok',
     name: 'Grok Build (xAI)',

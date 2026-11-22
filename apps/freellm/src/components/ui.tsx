@@ -1,5 +1,5 @@
 import type { ButtonHTMLAttributes, HTMLAttributes, InputHTMLAttributes, ReactNode, SelectHTMLAttributes } from 'react'
-import { createContext, useContext, useState } from 'react'
+import { createContext, useContext, useEffect, useRef, useState } from 'react'
 import { formatCredits, formatExact } from '../lib/format'
 
 type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger'
@@ -443,3 +443,121 @@ export function useConfirm() {
 
 export { MetricCard, FilterChipBar, VirtualizedTable, SparklinePlus, StreakHero } from './Primitives'
 export type { MetricCardProps, FilterChip, FilterChipBarProps, ColumnDef, VirtualizedTableProps, SparklinePlusProps, StreakHeroProps } from './Primitives'
+
+/** Google AdSense Ad Slot component. Use responsively. */
+interface AdSlotProps {
+  /** AdSense slot ID from your AdSense account */
+  slot: string
+  /** Ad format: 'auto' for responsive, or specific dimensions like '728x90' */
+  format?: 'auto' | 'horizontal' | 'vertical' | 'rectangle' | 'square'
+  /** Custom CSS class */
+  className?: string
+  /** Inline style for the container */
+  style?: React.CSSProperties
+}
+
+const AD_CLIENT = 'ca-pub-7046934020222763'
+
+export function AdSlot({ slot, format = 'auto', className = '', style }: AdSlotProps) {
+  const adRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const adElement = adRef.current
+    if (!adElement) return
+
+    // Push the ad slot to the adsbygoogle queue
+    const pushAd = () => {
+      if (typeof window !== 'undefined' && (window as any).adsbygoogle) {
+        try {
+          (window as any).adsbygoogle.push({})
+        } catch (e) {
+          console.warn('AdSense push failed:', e)
+        }
+      }
+    }
+
+    // If adsbygoogle is already loaded, push immediately
+    if (typeof window !== 'undefined' && (window as any).adsbygoogle) {
+      pushAd()
+    } else {
+      // Otherwise wait for the script to load
+      const checkInterval = setInterval(() => {
+        if (typeof window !== 'undefined' && (window as any).adsbygoogle) {
+          clearInterval(checkInterval)
+          pushAd()
+        }
+      }, 100)
+
+      // Timeout after 10 seconds
+      const timeout = setTimeout(() => clearInterval(checkInterval), 10000)
+
+      return () => {
+        clearInterval(checkInterval)
+        clearTimeout(timeout)
+      }
+    }
+  }, [slot])
+
+  const getAdStyle = () => {
+    const baseStyle: React.CSSProperties = {
+      display: 'block',
+      ...style,
+    }
+
+    switch (format) {
+      case 'horizontal':
+        return { ...baseStyle, width: '100%', maxWidth: '728px', minHeight: '90px' }
+      case 'vertical':
+        return { ...baseStyle, width: '160px', minHeight: '600px' }
+      case 'rectangle':
+        return { ...baseStyle, width: '100%', maxWidth: '336px', minHeight: '280px' }
+      case 'square':
+        return { ...baseStyle, width: '100%', maxWidth: '300px', minHeight: '250px' }
+      case 'auto':
+      default:
+        return { ...baseStyle, width: '100%', minHeight: '90px' }
+    }
+  }
+
+  return (
+    <div
+      ref={adRef}
+      className={`adsbygoogle-slot ${className}`}
+      style={getAdStyle()}
+      data-ad-client={AD_CLIENT}
+      data-ad-slot={slot}
+      data-ad-format={format === 'auto' ? 'auto' : undefined}
+      data-full-width-responsive="true"
+    >
+      <ins
+        className="adsbygoogle"
+        style={getAdStyle()}
+        data-ad-client={AD_CLIENT}
+        data-ad-slot={slot}
+        data-ad-format={format === 'auto' ? 'auto' : undefined}
+        data-full-width-responsive="true"
+      />
+    </div>
+  )
+}
+
+/** AdSense auto-ads hook - call once in AppShell or root layout */
+export function useAdSenseAutoAds() {
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    const script = document.querySelector('script[data-ad-client]')
+    if (script) {
+      // Auto-ads script is already loaded via index.html
+      return
+    }
+
+    // Fallback: inject script if not present (shouldn't happen with index.html)
+    const adScript = document.createElement('script')
+    adScript.async = true
+    adScript.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js'
+    adScript.setAttribute('data-ad-client', AD_CLIENT)
+    adScript.setAttribute('crossorigin', 'anonymous')
+    document.head.appendChild(adScript)
+  }, [])
+}

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { api, ApiError } from '../lib/api'
 import { useAuth } from '../lib/useAuth'
-import { Button, Card } from '../components/ui'
+import { Button, Card, AdSlot } from '../components/ui'
 import ArcadePanel, { type ArcadeSessionStats } from '../components/ArcadePanel'
 import TodayCard from '../components/TodayCard'
 import EarnTile from '../components/EarnTile'
@@ -460,6 +460,11 @@ export default function Earn() {
         />
       )}
 
+            {/* Ad slot - After TodayCard */}
+            <div className="py-4" aria-label="Advertisement">
+              <AdSlot slot="YOUR_EARN_HERO_AD_SLOT_ID" format="horizontal" className="mx-auto max-w-4xl" />
+            </div>
+
       {/* Inline promo redemption — shows when balance is low */}
       {state && gamesStatus && !state.checkin.checked_in_today && user.balance_credits < 50000 && (
         <Card className="border-cyan/40 bg-cyan/5 p-4" id="promo-inline">
@@ -645,6 +650,11 @@ export default function Earn() {
           <SeasonalEvents />
         </EarnTile>
       </div>
+
+              {/* Ad slot - Mid page */}
+              <div className="py-4" aria-label="Advertisement">
+                <AdSlot slot="YOUR_EARN_MID_AD_SLOT_ID" format="rectangle" className="mx-auto max-w-4xl" />
+              </div>
 
       {/* COLLAPSED FOOTER */}
       <details id="promo-section" className="card group">
