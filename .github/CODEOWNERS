@@ -1,0 +1,75 @@
+# CODEOWNERS for hasit.in
+# These users/teams will be requested for review when matching files are changed.
+# See https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Global owners - all changes require review
+* @hasitpbhatt
+
+# Core Worker configuration
+/src/index.ts @hasitpbhatt
+/src/env.ts @hasitpbhatt
+/wrangler.toml @hasitpbhatt
+/package.json @hasitpbhatt
+/tsconfig.json @hasitpbhatt
+
+# Security middleware
+/src/middleware/security-headers.ts @hasitpbhatt
+/src/middleware/security.ts @hasitpbhatt
+/src/middleware/session.ts @hasitpbhatt
+
+# Authentication
+/src/lib/auth/ @hasitpbhatt
+
+# Database queries
+/src/lib/db/ @hasitpbhatt
+
+# Host routing
+/src/lib/host-routing.ts @hasitpbhatt
+
+# Apps
+/src/apps/trx/ @hasitpbhatt
+/src/apps/freellm/ @hasitpbhatt
+/src/apps/fitness/ @hasitpbhatt
+/src/apps/finance/ @hasitpbhatt
+/src/apps/quiz/ @hasitpbhatt
+/src/apps/games/ @hasitpbhatt
+/src/apps/blog/ @hasitpbhatt
+/src/apps/portfolio/ @hasitpbhatt
+
+# App source (for SPA builds)
+/apps/freellm/ @hasitpbhatt
+/apps/games/ @hasitpbhatt
+/apps/fitness/ @hasitpbhatt
+/apps/finance/ @hasitpbhatt
+/apps/quiz/ @hasitpbhatt
+
+# Build scripts
+/scripts/build-apps.js @hasitpbhatt
+/scripts/check-config.js @hasitpbhatt
+/scripts/generate-sitemap.js @hasitpbhatt
+/scripts/migrate.js @hasitpbhatt
+/scripts/dev-keys.js @hasitpbhatt
+/scripts/smoke.js @hasitpbhatt
+
+# CI/CD workflows
+/.github/workflows/ @hasitpbhatt
+
+# Tests
+/tests/ @hasitpbhatt
+
+# Documentation
+/README.md @hasitpbhatt
+/STRATEGY.md @hasitpbhatt
+/plan.md @hasitpbhatt
+/AGENTS.md @hasitpbhatt
+
+# Configuration files
+/.eslintrc.cjs @hasitpbhatt
+/.nvmrc @hasitpbhatt
+/.gitignore @hasitpbhatt
+
+# Static assets
+/public/_headers @hasitpbhatt
+/public/_redirects @hasitpbhatt
+/public/robots.txt @hasitpbhatt
+/public/ads.txt @hasitpbhatt
