@@ -3,7 +3,7 @@ const ALLOWED_ORIGINS = [
   'https://hasit.in',
 ];
 
-const ALLOWED_MODEL = 'mistral-small-latest';
+const ALLOWED_MODEL = 'gemini-2.5-flash';
 const MAX_BODY_SIZE = 50 * 1024; // 50 KB
 const MAX_TOKENS = 1024;
 
@@ -58,6 +58,12 @@ export default {
       return jsonError(403, 'Forbidden origin', origin);
     }
 
+    // Get user's FreeLLM API key from header (set by main Worker after decrypting)
+    const freellmApiKey = request.headers.get('X-Freellm-Api-Key');
+    if (!freellmApiKey) {
+      return jsonError(401, 'FreeLLM API key not available', origin);
+    }
+
     try {
       const contentLength = request.headers.get('Content-Length');
       if (contentLength && parseInt(contentLength, 10) > MAX_BODY_SIZE) {
@@ -83,19 +89,20 @@ export default {
         body.max_tokens = MAX_TOKENS;
       }
 
-      const mistralResponse = await fetch('https://api.mistral.ai/v1/chat/completions', {
+      // Use FreeLLM's OpenAI-compatible API with user's decrypted key
+      const freellmResponse = await fetch('https://freellm.hasit.in/v1/chat/completions', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${env.MISTRAL_API_KEY}`,
+          'Authorization': `Bearer ${freellmApiKey}`,
         },
         body: JSON.stringify(body),
       });
 
-      const data = await mistralResponse.json();
+      const data = await freellmResponse.json();
 
       return new Response(JSON.stringify(data), {
-        status: mistralResponse.status,
+        status: freellmResponse.status,
         headers: { 'Content-Type': 'application/json', ...corsHeaders(origin) },
       });
     } catch (error) {

@@ -12,12 +12,12 @@
 // BYOK mode (key_mode=byok): free, direct, no reserve/hold/balance checks.
 
 import { Hono } from 'hono'
-import { requireAuth } from '../lib/middleware'
+import { centralAuthMiddleware, getCentralUser, canAccessCentralUserModel } from '../lib/middleware'
 import { estimateReserve, computeSpendable, placeHold, settleRequest, IMAGE_RESERVE_TOKENS, type Usage } from '../lib/metering'
 import { contentImageCount, contentTextLength, parseOpenAiMessages } from '../lib/openai-messages'
 import { aliasSupportsVision, loadAlias, openCall, recordOutcome, resolveCandidates, type ModelProviderRow, type UpstreamProviderWithModel } from '../lib/providers' // up_labels is unused and can be removed in future
 import { readJsonBody } from '../lib/request-body'
-import { canAccessModel, tierGatedMessage } from '../lib/tiers'
+import { tierGatedMessage } from '../lib/tiers'
 import { dialConnection, connectionSettleModel, getUsableConnection } from '../lib/connections'
 import type { Bindings, ModelRow, UpstreamKeyRow, Variables } from '../lib/types'
 
@@ -51,8 +51,8 @@ function usageFromChunk(chunk: Record<string, unknown>): { input: number; output
 
 // ------------------------------------------------------------- chat
 
-app.post('/api/chat', requireAuth, async (c) => {
-  const user = c.get('user')
+app.post('/api/chat', centralAuthMiddleware, async (c) => {
+  const user = getCentralUser(c)
   const parsed = await readJsonBody<{
     model?: unknown
     messages?: unknown
@@ -154,7 +154,7 @@ app.post('/api/chat', requireAuth, async (c) => {
   }
 
   // Tier gate runs before any reserve/hold so a denied caller is never charged.
-  if (!isConnectionCall && alias && !canAccessModel(user, alias.model)) {
+    if (!isConnectionCall && alias && !canAccessCentralUserModel(user, alias.model)) {
     return c.json(
       { error: 'upgrade_required', message: tierGatedMessage(alias.model), required_tier: alias.model.access_tier },
       403,

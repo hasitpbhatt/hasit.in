@@ -1,8 +1,10 @@
 import { useState } from 'react'
 
-// "Continue with Google" — a plain link to the server-side OAuth entry point
-// (/api/auth/google), which stores the state + desired destination in KV and
-// 302s to Google. The callback lands back with the session cookie set.
+// "Continue with Google" — redirects to centralized auth.hasit.in which handles
+// the Google OAuth flow, then redirects back to the app with a one-time code.
+// The app exchanges the code for an access token via /exchange endpoint.
+
+const AUTH_DOMAIN = 'https://auth.hasit.in'
 
 export function GoogleButton({
   label = 'Continue with Google',
@@ -18,11 +20,14 @@ export function GoogleButton({
   const [navigating, setNavigating] = useState(false)
   const safeNext = next && /^\/[^/\\]/.test(next) ? next : null
   const safeRef = referral && /^[a-z0-9]{2,32}$/i.test(referral) ? referral.toLowerCase() : null
+  
+  // Build the return URL with ref for referral attribution
   const params = new URLSearchParams()
-  if (safeNext) params.set('next', safeNext)
+  if (safeNext) params.set('return', safeNext)
   if (safeRef) params.set('ref', safeRef)
   const query = params.toString()
-  const href = query ? `/api/auth/google?${query}` : '/api/auth/google'
+  const href = query ? `${AUTH_DOMAIN}/login/freellm?${query}` : `${AUTH_DOMAIN}/login/freellm`
+  
   // NOTE: href stays put during the navigating state. An earlier version
   // swapped href to undefined on click for feedback, which cancelled the
   // browser's default navigation — the button stuck on "Opening Google…"

@@ -6,6 +6,7 @@ export type AuthState = {
   loading: boolean
   logout: () => Promise<void>
   refresh: () => Promise<void>
+  setToken: (accessToken: string) => Promise<void>
 }
 
 // Kept in its own module so auth.tsx exports only the provider component and

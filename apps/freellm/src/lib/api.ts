@@ -10,7 +10,53 @@ export class ApiError extends Error {
   }
 }
 
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
+async function request<T>(path: string, accessToken: string, init?: RequestInit): Promise<T> {
+  const res = await fetch(`/api${path}`, {
+    credentials: 'same-origin',
+    ...init,
+    headers: {
+      'Authorization': `Bearer ${accessToken}`,
+      ...(init?.body ? { 'Content-Type': 'application/json' } : {}),
+      ...init?.headers,
+    },
+  })
+  const body = (await res.json().catch(() => null)) as Record<string, unknown> | null
+  if (!res.ok) {
+    throw new ApiError(
+      res.status,
+      (body?.error as string) ?? 'unknown',
+      (body?.message as string) ?? res.statusText,
+    )
+  }
+  return body as T
+}
+
+/**
+ * Creates an API client bound to a specific access token.
+ * Use this from components that have access to the auth context.
+ */
+export function createApiClient(accessToken: string) {
+  return {
+    get: <T>(path: string) => request<T>(path, accessToken),
+    post: <T>(path: string, data?: unknown) =>
+      request<T>(path, accessToken, { method: 'POST', body: data ? JSON.stringify(data) : undefined }),
+    patch: <T>(path: string, data?: unknown) =>
+      request<T>(path, accessToken, { method: 'PATCH', body: data ? JSON.stringify(data) : undefined }),
+    del: <T>(path: string) => request<T>(path, accessToken, { method: 'DELETE' }),
+  }
+}
+
+// Legacy API (for backward compatibility - uses cookie-based auth)
+export const api = {
+  get: <T>(path: string) => requestLegacy<T>(path),
+  post: <T>(path: string, data?: unknown) =>
+    requestLegacy<T>(path, { method: 'POST', body: data ? JSON.stringify(data) : undefined }),
+  patch: <T>(path: string, data?: unknown) =>
+    requestLegacy<T>(path, { method: 'PATCH', body: data ? JSON.stringify(data) : undefined }),
+  del: <T>(path: string) => requestLegacy<T>(path, { method: 'DELETE' }),
+}
+
+async function requestLegacy<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`/api${path}`, {
     credentials: 'same-origin',
     ...init,
@@ -28,15 +74,6 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     )
   }
   return body as T
-}
-
-export const api = {
-  get: <T>(path: string) => request<T>(path),
-  post: <T>(path: string, data?: unknown) =>
-    request<T>(path, { method: 'POST', body: data ? JSON.stringify(data) : undefined }),
-  patch: <T>(path: string, data?: unknown) =>
-    request<T>(path, { method: 'PATCH', body: data ? JSON.stringify(data) : undefined }),
-  del: <T>(path: string) => request<T>(path, { method: 'DELETE' }),
 }
 
 export type CatalogModel = {

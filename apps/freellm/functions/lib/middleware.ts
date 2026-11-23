@@ -4,6 +4,8 @@ import { createMiddleware } from 'hono/factory'
 import type { Bindings, UserRow, Variables } from './types'
 import { getSession } from './session'
 import { sha256Hex } from './crypto'
+import { authMiddleware as centralAuthMiddlewareFactory } from '../../../../src/lib/auth/middleware'
+import type { HasitJWTPayload } from '../../../../src/lib/auth/jwt'
 
 type Env = { Bindings: Bindings; Variables: Variables }
 
@@ -62,6 +64,60 @@ export const requireAdmin = createMiddleware<Env>(async (c, next) => {
 })
 
 /**
+ * Centralized auth middleware for freellm - wraps the centralized auth
+ * and converts the payload to a freellm UserRow by looking up in freellm_users.
+ * Uses JWT validation from auth.hasit.in.
+ */
+export const centralAuthMiddleware = createMiddleware<Env>(async (c, next) => {
+  // First run the centralized auth middleware to validate the JWT
+  const centralMiddleware = centralAuthMiddlewareFactory<Bindings>('freellm')
+  await centralMiddleware(c as any, async () => {
+    // Now we have the JWT payload in c.get('user')
+    const jwtUser = c.get('user') as unknown as HasitJWTPayload | undefined
+    if (!jwtUser) {
+      c.json({ error: 'unauthorized', message: 'Sign in to continue.' }, 401)
+      return
+    }
+    
+    // Look up the user in freellm_users using the centralized user's sub (core_users ID)
+    const user = await c.env.DB.prepare('SELECT * FROM freellm_users WHERE id = ?').bind(jwtUser.sub).first<UserRow>()
+    if (!user) {
+      c.json({ error: 'unauthorized', message: 'User not found in freellm system.' }, 401)
+      return
+    }
+    c.set('user', user)
+    await next()
+  })
+})
+
+// Re-export for convenience
+export { centralAuthMiddleware as authMiddleware }
+export { getCentralUser as getUser }
+
+/**
+ * Get user from centralized auth - returns the freellm UserRow.
+ * Must be called after centralAuthMiddleware has run.
+ */
+export const getCentralUser = (c: { get(key: string): unknown }): UserRow => {
+  const user = c.get('user') as UserRow | undefined
+  if (!user) throw new Error('User not set - centralAuthMiddleware must run first')
+  return user
+}
+
+/**
+ * Centralized auth admin middleware - checks admin role on the user
+ * already set by centralAuthMiddleware.
+ */
+export const requireCentralAuthAdmin = createMiddleware<Env>(async (c, next) => {
+  const user = c.get('user') as UserRow | undefined
+  if (!user) return c.json({ error: 'unauthorized', message: 'Sign in to continue.' }, 401)
+  if (user.role !== 'admin') {
+    return c.json({ error: 'forbidden', message: 'Admin access required.' }, 403)
+  }
+  await next()
+})
+
+/**
  * 401s unless the request is authenticated by EITHER a session cookie OR an
  * `Authorization: Bearer fl_…` API token. Used by the /v1 OpenAI-compatible
  * surface; the native /api/* surface keeps cookie-only requireAuth.
@@ -87,3 +143,20 @@ export const requireAuthOrToken = createMiddleware<Env>(async (c, next) => {
   c.set('user', user)
   await next()
 })
+
+/**
+ * Wrapper for canAccessModel that works with centralized auth user.
+ * The centralized user has 'tier' from freellm_users via the admin lookup,
+ * but for non-admin users we default to 'free' tier.
+ */
+import { canAccessModel as coreCanAccessModel } from './tiers'
+
+export function canAccessCentralUserModel(
+  user: UserRow,
+  model: { access_tier?: unknown }
+): boolean {
+  // For centralized auth users, we need to look up their tier from freellm_users
+  // This is handled by requireCentralAuthAdmin which sets the full UserRow
+  // For now, default to free tier (can be enhanced to fetch tier from DB)
+  return coreCanAccessModel({ tier: user.tier, role: user.role }, model)
+}

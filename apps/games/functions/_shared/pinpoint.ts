@@ -46,8 +46,8 @@ export const CATEGORIES: Category[] = [
   { name: 'Mountains', clues: ['Everest', 'Kilimanjaro', 'Fuji', 'Denali', 'Elbrus', 'K2', 'Mont Blanc', 'Aconcagua'] },
 ]
 
-export const MISTRAL_API_URL = 'https://api.mistral.ai/v1/chat/completions'
-export const DEFAULT_MISTRAL_MODEL = 'mistral-small-latest'
+export const FREELLM_API_URL = 'https://freellm.hasit.in/v1/chat/completions'
+export const DEFAULT_FREELLM_MODEL = 'gemini-2.5-flash'
 
 export function categoryFromClues(clues: string[]): Category | null {
   const norm = clues.map((c) => c.toLowerCase().trim()).filter(Boolean)
@@ -79,14 +79,14 @@ export async function llmGuessMatchesCategory(
     'Answer with only "yes" or "no".',
   ].join(' ')
 
-  const res = await fetch(MISTRAL_API_URL, {
+  const res = await fetch(FREELLM_API_URL, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${opts.apiKey}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      model: opts.model ?? DEFAULT_MISTRAL_MODEL,
+      model: opts.model ?? DEFAULT_FREELLM_MODEL,
       messages: [{ role: 'user', content: prompt }],
       max_tokens: 3,
       temperature: 0,
@@ -96,7 +96,7 @@ export async function llmGuessMatchesCategory(
 
   if (!res.ok) {
     const text = await res.text().catch(() => '')
-    throw new Error(`Mistral ${res.status}: ${text}`)
+    throw new Error(`FreeLLM ${res.status}: ${text}`)
   }
 
   const data = (await res.json()) as {

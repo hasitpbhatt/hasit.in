@@ -1,10 +1,10 @@
-// Optional committee-evaluation script: uses Mistral's API (MISTRAL_API_KEY) to
+// Optional committee-evaluation script: uses FreeLLM's API (FREELLM_SYSTEM_API_KEY) to
 // critique the "Last Cabinet" soul layer + proposed new games against the
 // economy guardrails. Skips gracefully when no key is configured.
 //   npm run evaluate
 
-const API_URL = 'https://api.mistral.ai/v1/chat/completions'
-const MODEL = process.env.MISTRAL_MODEL ?? 'mistral-small-latest'
+const API_URL = 'https://freellm.hasit.in/v1/chat/completions'
+const MODEL = process.env.FREELLM_MODEL ?? process.env.MISTRAL_MODEL ?? 'gemini-2.5-flash'
 
 const GUARDRAILS = `
 1. 100% skill-based, no chance/luck rewards, no wager framing (India law).
@@ -49,8 +49,8 @@ JSON only, no prose:
 }`
 
 const run = async () => {
-  if (!process.env.MISTRAL_API_KEY) {
-    console.log('MISTRAL_API_KEY not set — skipping committee evaluation.')
+  if (!process.env.FREELLM_SYSTEM_API_KEY && !process.env.FREELLM_API_KEY && !process.env.MISTRAL_API_KEY) {
+    console.log('FREELLM_SYSTEM_API_KEY not set — skipping committee evaluation.')
     console.log('Set it and re-run:  npm run evaluate')
     return
   }
@@ -58,7 +58,7 @@ const run = async () => {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${process.env.MISTRAL_API_KEY}`,
+      Authorization: `Bearer ${process.env.FREELLM_SYSTEM_API_KEY || process.env.FREELLM_API_KEY || process.env.MISTRAL_API_KEY}`,
     },
     body: JSON.stringify({
       model: MODEL,
@@ -69,11 +69,11 @@ const run = async () => {
   })
   if (!res.ok) {
     const text = await res.text()
-    console.error(`Mistral API ${res.status}: ${text}`)
+    console.error(`FreeLLM API ${res.status}: ${text}`)
     process.exit(1)
   }
   const data = await res.json()
-  console.log('Committee evaluation via Mistral:')
+  console.log('Committee evaluation via FreeLLM:')
   console.log(data.choices?.[0]?.message?.content ?? JSON.stringify(data))
 }
 

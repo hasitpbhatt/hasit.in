@@ -18,7 +18,7 @@
 //   POST /api/admin/providers/:pid/reveal decrypted pool config key
 
 import { Hono } from 'hono'
-import { requireAdmin, requireAuth } from '../lib/middleware'
+import { centralAuthMiddleware, getCentralUser, requireCentralAuthAdmin } from '../lib/middleware'
 import { decryptSecret, decryptForDisplay, encryptSecret, maskSecret, newId } from '../lib/crypto'
 import { pingProvider } from '../lib/ping'
 import { CODEX_DEFAULT_ENDPOINT, validateAccountId, validateAuthKind, validateBaseUrl, validateBearer, validateExpiryTimestamp, validateOAuthToken, validateProtocol, validateRefreshToken, validateUpstreamModel } from '../lib/validate'
@@ -86,10 +86,10 @@ function publicKey(row: ConnectionRow, keyMasked: string) {
 // User vault
 // =====================================================================
 
-app.use('/api/keys/*', requireAuth)
+app.use('/api/keys/*', centralAuthMiddleware)
 
 app.get('/api/keys', async (c) => {
-  const user = c.get('user')
+  const user = getCentralUser(c)
   const rows = await listPersonalConnections(c.env, user.id)
 
   const encryption = requireEncryptionKey(c.env)
@@ -101,7 +101,7 @@ app.get('/api/keys', async (c) => {
 })
 
 app.post('/api/keys', async (c) => {
-  const user = c.get('user')
+  const user = getCentralUser(c)
   const rateLimit = await checkRateLimit(c.env.freellm_sessions, user.id, 'add')
   if (!rateLimit.allowed) {
     return c.json(
@@ -215,7 +215,7 @@ app.post('/api/keys', async (c) => {
     )
       .bind(
         id,
-        user.id,
+              user.id,
         key.label,
         key.baseUrl,
         key.upstreamModel,
@@ -259,7 +259,7 @@ return c.json({ keys: results }, 201)
 })
 
 app.post('/api/keys/:id/test', async (c) => {
-  const user = c.get('user')
+  const user = getCentralUser(c)
   const rateLimit = await checkRateLimit(c.env.freellm_sessions, user.id, 'test')
   if (!rateLimit.allowed) {
     return c.json(
@@ -319,7 +319,7 @@ app.post('/api/keys/:id/test', async (c) => {
     .bind(
       eventId,
       id,
-      user.id,
+          user.id,
       ping.ok ? 'test_success' : 'test_failure',
       ping.ok ? null : (ping.error?.includes('401') ? 'auth_failed' : ping.error?.includes('429') ? 'rate_limited' : ping.error?.includes('timeout') ? 'timeout' : 'unknown'),
       ping.ok ? null : ping.error,
@@ -332,7 +332,7 @@ app.post('/api/keys/:id/test', async (c) => {
 })
 
 app.delete('/api/keys/:id', async (c) => {
-  const user = c.get('user')
+  const user = getCentralUser(c)
   const id = c.req.param('id')
   const row = await c.env.DB.prepare(
     "SELECT id FROM freellm_connections WHERE id = ? AND owner_id = ? AND scope = 'personal'",
@@ -348,8 +348,8 @@ app.delete('/api/keys/:id', async (c) => {
 // Operator visibility (admin) — encrypted at rest, revealable on demand
 // =====================================================================
 
-app.use('/api/admin/vault/*', requireAuth, requireAdmin)
-app.use('/api/admin/providers/:pid/reveal', requireAuth, requireAdmin)
+app.use('/api/admin/vault/*', centralAuthMiddleware, requireCentralAuthAdmin)
+app.use('/api/admin/providers/:pid/reveal', centralAuthMiddleware, requireCentralAuthAdmin)
 
 app.get('/api/admin/vault', async (c) => {
   const rows = await c.env.DB.prepare(
@@ -373,7 +373,7 @@ app.get('/api/admin/vault', async (c) => {
 
 app.post('/api/admin/vault/:id/reveal', async (c) => {
   const id = c.req.param('id')
-  const admin = c.get('user')
+  const admin = getCentralUser(c)
   const body = await c.req.json<{ justification?: unknown }>().catch(() => null)
   if (!body) return c.json({ error: 'invalid_input', message: 'Request body is required.' }, 400)
   const justificationError = validateJustification(body.justification)
@@ -398,7 +398,7 @@ app.post('/api/admin/vault/:id/reveal', async (c) => {
   // Write audit log AFTER successful reveal
   const { ip, user_agent } = getClientInfo(c)
   await writeAuditLog(c.env, {
-    admin_id: admin.id,
+      admin_id: admin.id,
     action: 'vault_reveal',
     target_type: 'connection',
     target_id: id,

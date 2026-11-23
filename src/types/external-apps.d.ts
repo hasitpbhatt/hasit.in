@@ -1,5 +1,8 @@
 // Type contracts for source JavaScript modules consumed by Worker adapters.
 type FinanceApiEnv = {
+  FREELLM_API_KEY?: string;
+  FREELLM_MODEL?: string;
+  // Deprecated - fallback only
   MISTRAL_API_KEY?: string;
   MISTRAL_MODEL?: string;
 };
@@ -46,7 +49,7 @@ declare module '*apps/finance/lib/http.js' {
 
 declare module '*apps/quiz/quiz/proxy/worker.js' {
   const worker: {
-    fetch(request: Request, env: { MISTRAL_API_KEY?: string }): Promise<Response>;
+    fetch(request: Request, env: { FREELLM_API_KEY?: string; MISTRAL_API_KEY?: string }): Promise<Response>;
   };
   export default worker;
 }

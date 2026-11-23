@@ -12,6 +12,7 @@ interface CoreUser {
   email: string;
   name: string;
   picture: string;
+  email_verified: number;
 }
 
 async function getCryptoKey(env: Env): Promise<CryptoKey> {
@@ -229,8 +230,32 @@ export async function handleOAuthCallback(env: Env, code: string, app: string): 
   // Link app
   await linkUserApp(env.DB, env, userId, app, tokens.refresh_token!, SCOPES[app as keyof typeof SCOPES] || SCOPES.default);
 
-  // Create session
-  const session = await createSession(env.DB, env, userId, app, SCOPES[app as keyof typeof SCOPES] || SCOPES.default);
+  // Create session with email_verified
+  const userForSession = await env.DB.prepare('SELECT sub, email, name, picture, email_verified FROM core_users WHERE id = ?')
+    .bind(userId).first<CoreUser>();
+  if (!userForSession) {
+    throw new Error('User not found');
+  }
+
+  const accessToken = await signJWT({
+    sub: userForSession.sub,
+    email: userForSession.email,
+    name: userForSession.name,
+    picture: userForSession.picture,
+    app,
+    scope: SCOPES[app as keyof typeof SCOPES] || SCOPES.default,
+    email_verified: userForSession.email_verified === 1,
+  }, env, '15m');
+
+  const refreshToken = await signRefreshToken({ sub: userForSession.sub, app }, env);
+
+  const sessionId = crypto.randomUUID();
+  await env.DB.prepare(`
+    INSERT INTO core_sessions (id, user_id, app, issued_at, expires_at)
+    VALUES (?, ?, ?, unixepoch(), unixepoch() + 15 * 60)
+  `).bind(sessionId, userId, app).run();
+
+  const session = { accessToken, refreshToken, sessionId };
 
   return { app, ...session };
 }

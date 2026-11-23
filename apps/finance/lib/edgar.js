@@ -239,18 +239,18 @@ function extractItem502Section(xml) {
   return rest.substring(0, end);
 }
 
-// Call Mistral to extract officer names from the Item 5.02 section text.
+// Call FreeLLM to extract officer names from the Item 5.02 section text.
 // Falls back to an empty array on any error. Honors `signal` so a deadline
 // abort actually stops the fetch (and its retries) instead of churning.
-async function mistralExtractNames(section, apiKey, signal = null) {
+async function freellmExtractNames(section, apiKey, signal = null) {
   if (!apiKey) return [];
   const plain = stripHtml(section).substring(0, 3000);
   try {
-    const res = await retryFetch('https://api.mistral.ai/v1/chat/completions', {
+    const res = await retryFetch('https://freellm.hasit.in/v1/chat/completions', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
       body: JSON.stringify({
-        model: 'mistral-small-latest',
+        model: 'gemini-2.5-flash',
         messages: [
           { role: 'system', content: 'Extract only the full names of real people (officers, directors, executives) who are departing, appointed, or elected in this SEC 8-K Item 5.02 filing section. Return a JSON array of strings, e.g. ["Jane Doe", "John Smith"]. Return [] if no person names found. No explanations.' },
           { role: 'user', content: plain },
@@ -357,8 +357,8 @@ export async function getLeadershipChanges(symbol, months = 12, env = {}, signal
     docs.push(...results);
   }
 
-  // 4) Process each document — extract sections, then run Mistral concurrently
-  const apiKey = env.MISTRAL_API_KEY || '';
+  // 4) Process each document — extract sections, then run FreeLLM concurrently
+  const apiKey = env.FREELLM_SYSTEM_API_KEY || env.FREELLM_API_KEY || env.MISTRAL_API_KEY || '';
   const toProcess = [];
   for (const { filing, xml } of docs) {
     if (!xml || !/ITEM\s+5\.02/i.test(xml)) continue;
@@ -377,7 +377,7 @@ export async function getLeadershipChanges(symbol, months = 12, env = {}, signal
         const secLower = section.toLowerCase();
         const hasDeparture = /resign|depart|retire|terminat|leave the company|steps down/i.test(secLower);
         const hasAppointment = /appoint|elect|promote|welcome|board member/i.test(secLower);
-        let names = await mistralExtractNames(section, apiKey, signal);
+        let names = await freellmExtractNames(section, apiKey, signal);
         if (!names.length) names = extractNamesRegex(section);
         const plainSection = stripHtml(section);
         const firstNameIdx = names.length > 0 ? plainSection.indexOf(names[0]) : null;

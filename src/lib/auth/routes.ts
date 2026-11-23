@@ -283,8 +283,8 @@ authRoutes.post('/refresh/:app', async (c) => {
     }
 
     const userInfo = await c.env.DB.prepare(
-      'SELECT sub, email, name, picture FROM core_users WHERE id = ?'
-    ).bind(user.id).first<UserRow>();
+      'SELECT sub, email, name, picture, email_verified FROM core_users WHERE id = ?'
+    ).bind(user.id).first<{ sub: string; email: string; name: string; picture: string; email_verified: number }>();
     if (!userInfo) {
       throw new Error('User not found');
     }
@@ -296,6 +296,7 @@ authRoutes.post('/refresh/:app', async (c) => {
       picture: userInfo.picture,
       app,
       scope: 'openid email profile',
+      email_verified: userInfo.email_verified === 1,
     }, c.env, '15m');
 
     const newRefreshToken = await signRefreshToken({ sub: payload.sub, app }, c.env);

@@ -10,7 +10,7 @@
 // Every route here is behind requireAuth + requireAdmin.
 
 import { Hono } from 'hono'
-import { requireAdmin, requireAuth } from '../lib/middleware'
+import { centralAuthMiddleware, requireCentralAuthAdmin } from '../lib/middleware'
 import { decryptSecret, encryptSecret, maskSecret, newId } from '../lib/crypto'
 import { validateAdminGrantInput } from '../lib/credit-grants'
 import { writeAuditLog, getClientInfo, validateJustification } from '../lib/audit'
@@ -32,7 +32,7 @@ import { readModelMetrics } from '../lib/metering'
 
 const app = new Hono<{ Bindings: Bindings; Variables: Variables }>()
 
-app.use('/api/admin/*', requireAuth, requireAdmin)
+app.use('/api/admin/*', centralAuthMiddleware, requireCentralAuthAdmin)
 
 const now = () => Date.now()
 

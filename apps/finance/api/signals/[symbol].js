@@ -285,10 +285,11 @@ function computeMarketPulse(result) {
   };
 }
 
-// Call Mistral to write a plain-English summary in a value-investor frame
+// Call FreeLLM to write a plain-English summary in a value-investor frame
 // (Buffett/Lynch): what the business is, quality, growth, price, owners, risks.
-async function mistralNarrative(symbol, companyName, signals, env) {
-  const apiKey = env?.MISTRAL_API_KEY || env?.mistralApiKey;
+async function freellmNarrative(symbol, companyName, signals, env) {
+  // Use system FreeLLM API key for Finance narratives (internal service account)
+  const apiKey = env?.FREELLM_SYSTEM_API_KEY || env?.FREELLM_API_KEY || env?.MISTRAL_API_KEY || env?.mistralApiKey;
   if (!apiKey) return null;
 
   const parts = [];
@@ -352,11 +353,11 @@ Data:
 ${parts.join('\n')}`;
 
   try {
-    const res = await retryFetch('https://api.mistral.ai/v1/chat/completions', {
+    const res = await retryFetch('https://freellm.hasit.in/v1/chat/completions', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
       body: JSON.stringify({
-        model: 'mistral-medium-latest',
+        model: 'gemini-2.5-flash',
         messages: [
           { role: 'system', content: 'You are a panel of the greatest investors in history. You reply in strict JSON only, with short plain-English takes for a non-expert. No markdown.' },
           { role: 'user', content: prompt },

@@ -27,6 +27,9 @@ export type Bindings = {
   GOOGLE_OAUTH_CLIENT_SECRET?: string
   PUBLIC_ORIGIN?: string
   APP_BASE_PATH?: string
+  // JWT keys for centralized auth middleware
+  JWT_PRIVATE_KEY: string
+  JWT_PUBLIC_KEY: string
 }
 
 import type { ModelTier } from './tiers'

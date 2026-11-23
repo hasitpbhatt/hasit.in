@@ -11,7 +11,7 @@
 // Earning requires a verified email — the anti-farming gate.
 
 import { Hono } from 'hono'
-import { requireAuth } from '../lib/middleware'
+import { centralAuthMiddleware, getCentralUser } from '../lib/middleware'
 import { newId } from '../lib/crypto'
 import { appPath } from '../lib/app-path'
 import type { Bindings, Variables } from '../lib/types'
@@ -308,14 +308,14 @@ export async function qualifyForReferredUser(db: D1Database, referredUserId: str
 // Check-in
 // =====================================================================
 
-app.post('/api/checkin', requireAuth, async (c) => {
-  const user = c.get('user')
+app.post('/api/checkin', centralAuthMiddleware, async (c) => {
+  const user = getCentralUser(c)
   const gate = requireVerified(user)
   if (gate) return gate
 
   const today = utcDate(now())
   const existing = await c.env.DB.prepare('SELECT streak, reward FROM freellm_checkins WHERE user_id = ? AND checkin_date = ?')
-    .bind(user.id, today)
+      .bind(user.id, today)
     .first<{ streak: number; reward: number }>()
   if (existing) {
     return c.json({
@@ -328,10 +328,10 @@ app.post('/api/checkin', requireAuth, async (c) => {
 
   const yesterday = utcDate(now() - 86_400_000)
   const last = await c.env.DB.prepare('SELECT streak FROM freellm_checkins WHERE user_id = ? ORDER BY checkin_date DESC LIMIT 1')
-    .bind(user.id)
+      .bind(user.id)
     .first<{ streak: number }>()
   
-  const checkedInYesterday = last && (await checkedInOn(c.env.DB, user.id, yesterday))
+    const checkedInYesterday = last && (await checkedInOn(c.env.DB, user.id, yesterday))
   let streak = checkedInYesterday ? last.streak + 1 : 1
   let usedFreeze = false
 
@@ -340,7 +340,7 @@ app.post('/api/checkin', requireAuth, async (c) => {
     const freeze = await c.env.DB.prepare(
       'SELECT id FROM freellm_streak_freezes WHERE user_id = ? AND used_at IS NULL ORDER BY earned_at ASC LIMIT 1'
     )
-      .bind(user.id)
+        .bind(user.id)
       .first<{ id: string }>()
 
     if (freeze) {
@@ -353,7 +353,7 @@ app.post('/api/checkin', requireAuth, async (c) => {
         c.env.DB.prepare(
           `INSERT INTO freellm_credit_ledger (id, user_id, delta, reason, meta, created_at)
            VALUES (?, ?, 0, 'streak_freeze_used', ?, ?)`
-        ).bind(newId(), user.id, JSON.stringify({ freeze_id: freeze.id, saved_streak: last.streak }), timestamp),
+          ).bind(newId(), user.id, JSON.stringify({ freeze_id: freeze.id, saved_streak: last.streak }), timestamp),
       ])
       streak = last.streak + 1
       usedFreeze = true
@@ -368,12 +368,12 @@ app.post('/api/checkin', requireAuth, async (c) => {
     const batch = [
       c.env.DB.prepare(
         'INSERT INTO freellm_checkins (user_id, checkin_date, streak, reward, created_at) VALUES (?, ?, ?, ?, ?)',
-      ).bind(user.id, today, streak, reward, timestamp),
+        ).bind(user.id, today, streak, reward, timestamp),
       c.env.DB.prepare(
         "INSERT INTO freellm_credit_ledger (id, user_id, delta, reason, meta, created_at) VALUES (?, ?, ?, 'daily_checkin', ?, ?)",
       ).bind(
         newId(),
-        user.id,
+          user.id,
         reward,
         JSON.stringify({ streak, day_reward: CHECKIN_BASE_REWARD, milestone_bonus: milestone?.bonus ?? 0, freeze_used: usedFreeze }),
         timestamp,
@@ -381,18 +381,18 @@ app.post('/api/checkin', requireAuth, async (c) => {
       c.env.DB.prepare('UPDATE freellm_users SET balance_credits = balance_credits + ?, updated_at = ? WHERE id = ?').bind(
         reward,
         timestamp,
-        user.id,
+              user.id,
       ),
     ]
 
     // Grant streak freeze at day 30 milestone
     if (milestone && milestone.day === 30) {
-      const freezeId = `streak_freeze:${user.id}:${timestamp}`
+            const freezeId = `streak_freeze:${user.id}:${timestamp}`
       batch.push(
         c.env.DB.prepare(
           `INSERT INTO freellm_streak_freezes (id, user_id, earned_at, earned_source, created_at)
            VALUES (?, ?, ?, 'day30_chest', ?)`
-        ).bind(freezeId, user.id, timestamp, timestamp),
+              ).bind(freezeId, user.id, timestamp, timestamp),
       )
     }
 
@@ -401,7 +401,7 @@ app.post('/api/checkin', requireAuth, async (c) => {
     // Concurrent double check-in won the PK race — replay as idempotent.
     if (err instanceof Error && err.message.includes('UNIQUE constraint failed: freellm_checkins')) {
       const winner = await c.env.DB.prepare('SELECT streak, reward FROM freellm_checkins WHERE user_id = ? AND checkin_date = ?')
-        .bind(user.id, today)
+              .bind(user.id, today)
         .first<{ streak: number; reward: number }>()
       if (winner) {
         return c.json({ already_checked_in: true, streak: winner.streak, reward: winner.reward, balance: user.balance_credits })
@@ -411,10 +411,10 @@ app.post('/api/checkin', requireAuth, async (c) => {
   }
 
   // Update weekly quest progress for check-in streak
-  await updateWeeklyQuestProgress(c.env.DB, user.id, 'checkin_streak', streak)
+        await updateWeeklyQuestProgress(c.env.DB, user.id, 'checkin_streak', streak)
 
   // A day-1 check-in can push the referred user past the tenure milestone.
-  await qualifyForReferredUser(c.env.DB, user.id)
+        await qualifyForReferredUser(c.env.DB, user.id)
 
   return c.json({
     already_checked_in: false,
@@ -462,8 +462,8 @@ async function checkinState(db: D1Database, userId: string) {
 // Earn aggregate (drives the whole /earn page in one request)
 // =====================================================================
 
-app.get('/api/earn', requireAuth, async (c) => {
-  const user = c.get('user')
+app.get('/api/earn', centralAuthMiddleware, async (c) => {
+  const user = getCentralUser(c)
 
   // Lazy qualification sweep: pay any referrers whose referred user matured.
   await qualifyReferrals(c.env.DB, user.id)
@@ -555,8 +555,8 @@ app.get('/api/earn', requireAuth, async (c) => {
 // Referrals (standalone view; /api/earn has the same data)
 // =====================================================================
 
-app.get('/api/referrals', requireAuth, async (c) => {
-  const user = c.get('user')
+app.get('/api/referrals', centralAuthMiddleware, async (c) => {
+  const user = getCentralUser(c)
   await qualifyReferrals(c.env.DB, user.id)
   const origin = c.env.PUBLIC_ORIGIN ?? new URL(c.req.url).origin
   return c.json({
@@ -568,8 +568,8 @@ app.get('/api/referrals', requireAuth, async (c) => {
 })
 
 // GET /api/referrals/friends-streaks — get streaks of referred users
-app.get('/api/referrals/friends-streaks', requireAuth, async (c) => {
-  const user = c.get('user')
+app.get('/api/referrals/friends-streaks', centralAuthMiddleware, async (c) => {
+  const user = getCentralUser(c)
 
   // Get user's own streak
   const ownStreak = await c.env.DB.prepare(
@@ -645,8 +645,8 @@ app.get('/api/referrers/:code/profile', async (c) => {
 // Tasks
 // =====================================================================
 
-app.get('/api/tasks', requireAuth, async (c) => {
-  const user = c.get('user')
+app.get('/api/tasks', centralAuthMiddleware, async (c) => {
+  const user = getCentralUser(c)
   const [tasks, completions] = await Promise.all([
     c.env.DB.prepare('SELECT * FROM freellm_tasks WHERE active = 1 ORDER BY sort_order').all<{
       id: string
@@ -665,8 +665,8 @@ app.get('/api/tasks', requireAuth, async (c) => {
   })
 })
 
-app.post('/api/tasks/:slug/complete', requireAuth, async (c) => {
-  const user = c.get('user')
+app.post('/api/tasks/:slug/complete', centralAuthMiddleware, async (c) => {
+  const user = getCentralUser(c)
   const gate = requireVerified(user)
   if (gate) return gate
 
@@ -721,8 +721,8 @@ app.post('/api/tasks/:slug/complete', requireAuth, async (c) => {
 // =====================================================================
 
 // GET /api/weekly-quests — current week's quests with user progress
-app.get('/api/weekly-quests', requireAuth, async (c) => {
-  const user = c.get('user')
+app.get('/api/weekly-quests', centralAuthMiddleware, async (c) => {
+  const user = getCentralUser(c)
   const { weekStart, weekEnd, weekKey } = weekBounds(now())
 
   await ensureWeeklyQuests(c.env.DB, weekStart, weekEnd, weekKey)
@@ -766,8 +766,8 @@ app.get('/api/weekly-quests', requireAuth, async (c) => {
 })
 
 // POST /api/weekly-quests/:id/claim — claim reward for completed quest
-app.post('/api/weekly-quests/:id/claim', requireAuth, async (c) => {
-  const user = c.get('user')
+app.post('/api/weekly-quests/:id/claim', centralAuthMiddleware, async (c) => {
+  const user = getCentralUser(c)
   const gate = requireVerified(user)
   if (gate) return gate
 
@@ -806,8 +806,8 @@ app.post('/api/weekly-quests/:id/claim', requireAuth, async (c) => {
 // Usage dashboard
 // =====================================================================
 })
-app.get('/api/usage', requireAuth, async (c) => {
-  const user = c.get('user')
+app.get('/api/usage', centralAuthMiddleware, async (c) => {
+  const user = getCentralUser(c)
 
   const [perModel, recent, daily] = await Promise.all([
     c.env.DB.prepare(
@@ -889,8 +889,8 @@ app.get('/api/usage', requireAuth, async (c) => {
 // Usage Export (CSV/JSON)
 // =====================================================================
 
-app.get('/api/usage/export', requireAuth, async (c) => {
-  const user = c.get('user')
+app.get('/api/usage/export', centralAuthMiddleware, async (c) => {
+  const user = getCentralUser(c)
   const format = c.req.query('format') || 'csv'  // csv or json
   const days = parseInt(c.req.query('days') || '365', 10)  // default 1 year
 
@@ -990,8 +990,8 @@ app.get('/api/usage/export', requireAuth, async (c) => {
 // Ledger
 // =====================================================================
 
-app.get('/api/ledger', requireAuth, async (c) => {
-  const user = c.get('user')
+app.get('/api/ledger', centralAuthMiddleware, async (c) => {
+  const user = getCentralUser(c)
   const rows = await c.env.DB.prepare(
     'SELECT delta, reason, meta, created_at FROM freellm_credit_ledger WHERE user_id = ? ORDER BY created_at DESC LIMIT 50',
   )
@@ -1056,8 +1056,8 @@ app.get('/api/leaderboards/referrals', async (c) => {
 })
 
 // POST /api/leaderboards/refresh — admin endpoint to refresh all leaderboards
-app.post('/api/leaderboards/refresh', requireAuth, async (c) => {
-  const user = c.get('user')
+app.post('/api/leaderboards/refresh', centralAuthMiddleware, async (c) => {
+  const user = getCentralUser(c)
   if (user.role !== 'admin') return c.json({ error: 'forbidden', message: 'Admin only.' }, 403)
 
   const timestamp = now()
@@ -1159,8 +1159,8 @@ app.post('/api/leaderboards/refresh', requireAuth, async (c) => {
 // =====================================================================
 
 // GET /api/badges — all badge definitions with user's earned status
-app.get('/api/badges', requireAuth, async (c) => {
-  const user = c.get('user')
+app.get('/api/badges', centralAuthMiddleware, async (c) => {
+  const user = getCentralUser(c)
 
   const [badges, userBadges] = await Promise.all([
     c.env.DB.prepare('SELECT * FROM freellm_badges ORDER BY category, tier').all(),
@@ -1183,8 +1183,8 @@ app.get('/api/badges', requireAuth, async (c) => {
 })
 
 // POST /api/badges/check — check and award any newly earned badges
-app.post('/api/badges/check', requireAuth, async (c) => {
-  const user = c.get('user')
+app.post('/api/badges/check', centralAuthMiddleware, async (c) => {
+  const user = getCentralUser(c)
   const timestamp = now()
   const newlyEarned: string[] = []
 
@@ -1315,8 +1315,8 @@ app.post('/api/badges/check', requireAuth, async (c) => {
 })
 
 // POST /api/badges/:id/notify — mark badge notification as seen
-app.post('/api/badges/:id/notify', requireAuth, async (c) => {
-  const user = c.get('user')
+app.post('/api/badges/:id/notify', centralAuthMiddleware, async (c) => {
+  const user = getCentralUser(c)
   const badgeId = c.req.param('id')
 
   await c.env.DB.prepare('UPDATE freellm_user_badges SET notified = 1 WHERE user_id = ? AND badge_id = ?')
@@ -1351,8 +1351,8 @@ app.get('/api/seasonal-events', async (c) => {
 })
 
 // GET /api/seasonal-events/:id — event details with user progress
-app.get('/api/seasonal-events/:id', requireAuth, async (c) => {
-  const user = c.get('user')
+app.get('/api/seasonal-events/:id', centralAuthMiddleware, async (c) => {
+  const user = getCentralUser(c)
   const eventId = c.req.param('id')
 
   const event = await c.env.DB.prepare(
@@ -1398,8 +1398,8 @@ app.get('/api/seasonal-events/:id', requireAuth, async (c) => {
 })
 
 // POST /api/seasonal-events/:id/join — join an event
-app.post('/api/seasonal-events/:id/join', requireAuth, async (c) => {
-  const user = c.get('user')
+app.post('/api/seasonal-events/:id/join', centralAuthMiddleware, async (c) => {
+  const user = getCentralUser(c)
   const eventId = c.req.param('id')
   const timestamp = now()
 
@@ -1421,8 +1421,8 @@ app.post('/api/seasonal-events/:id/join', requireAuth, async (c) => {
 })
 
 // POST /api/seasonal-events/:id/quest/:questId/progress — update quest progress
-app.post('/api/seasonal-events/:id/quest/:questId/progress', requireAuth, async (c) => {
-  const user = c.get('user')
+app.post('/api/seasonal-events/:id/quest/:questId/progress', centralAuthMiddleware, async (c) => {
+  const user = getCentralUser(c)
   const eventId = c.req.param('id')
   const questId = c.req.param('questId')
   const body = await c.req.json<{ value: number }>().catch(() => null)
@@ -1444,8 +1444,8 @@ app.post('/api/seasonal-events/:id/quest/:questId/progress', requireAuth, async 
 })
 
 // POST /api/seasonal-events/:id/quest/:questId/claim — claim quest reward
-app.post('/api/seasonal-events/:id/quest/:questId/claim', requireAuth, async (c) => {
-  const user = c.get('user')
+app.post('/api/seasonal-events/:id/quest/:questId/claim', centralAuthMiddleware, async (c) => {
+  const user = getCentralUser(c)
   const eventId = c.req.param('id')
   const questId = c.req.param('questId')
   const timestamp = now()
@@ -1484,8 +1484,8 @@ app.post('/api/seasonal-events/:id/quest/:questId/claim', requireAuth, async (c)
 })
 
 // POST /api/cosmetics/:id/equip — equip/unequip a cosmetic
-app.post('/api/cosmetics/:id/equip', requireAuth, async (c) => {
-  const user = c.get('user')
+app.post('/api/cosmetics/:id/equip', centralAuthMiddleware, async (c) => {
+  const user = getCentralUser(c)
   const cosmeticId = c.req.param('id')
   const body = await c.req.json<{ equip: boolean }>().catch(() => ({ equip: true }))
 

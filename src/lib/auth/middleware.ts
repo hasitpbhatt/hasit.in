@@ -2,10 +2,14 @@ import type { Context, MiddlewareHandler } from 'hono';
 import type { Env } from '../../env';
 import { verifyJWT, type HasitJWTPayload } from './jwt';
 
-type AuthEnv = { Bindings: Env };
+// Define minimal bindings required for auth - just needs JWT keys
+type AuthBindings = Pick<Env, 'JWT_PRIVATE_KEY' | 'JWT_PUBLIC_KEY'>;
 
-export function authMiddleware(expectedApp: string): MiddlewareHandler<AuthEnv> {
-  return async (c, next) => {
+// Generic type that works with any bindings extending AuthBindings
+type AuthEnv<B extends AuthBindings> = { Bindings: B; Variables: { user?: HasitJWTPayload; appName?: string } };
+
+export function authMiddleware<B extends AuthBindings>(expectedApp: string): MiddlewareHandler<AuthEnv<B>> {
+  return async (c: Context<AuthEnv<B>>, next) => {
     const authHeader = c.req.header('Authorization');
 
     if (!authHeader?.startsWith('Bearer ')) {
@@ -13,7 +17,7 @@ export function authMiddleware(expectedApp: string): MiddlewareHandler<AuthEnv> 
     }
 
     const token = authHeader.slice(7);
-    const payload = await verifyJWT(token, c.env);
+    const payload = await verifyJWT(token, c.env as unknown as Env);
 
     if (!payload) {
       return c.json({ error: 'Invalid or expired token', loginUrl: `https://auth.hasit.in/login/${expectedApp}` }, 401);
@@ -29,13 +33,13 @@ export function authMiddleware(expectedApp: string): MiddlewareHandler<AuthEnv> 
   };
 }
 
-export function optionalAuthMiddleware(expectedApp: string): MiddlewareHandler<AuthEnv> {
+export function optionalAuthMiddleware<B extends AuthBindings>(expectedApp: string): MiddlewareHandler<AuthEnv<B>> {
   return async (c, next) => {
     const authHeader = c.req.header('Authorization');
 
     if (authHeader?.startsWith('Bearer ')) {
       const token = authHeader.slice(7);
-      const payload = await verifyJWT(token, c.env);
+      const payload = await verifyJWT(token, c.env as unknown as Env);
 
       if (payload && payload.app === expectedApp) {
         c.set('user', payload);
@@ -47,7 +51,10 @@ export function optionalAuthMiddleware(expectedApp: string): MiddlewareHandler<A
   };
 }
 
-export function getUser(c: Context<AuthEnv>): HasitJWTPayload {
+// Type for any context that has 'user' set with HasitJWTPayload - use any to accept various Hono context types
+type UserContext = any;
+
+export function getUser(c: UserContext): HasitJWTPayload {
   const user = c.get('user');
   if (!user) {
     throw new Error('User not authenticated');
@@ -55,6 +62,6 @@ export function getUser(c: Context<AuthEnv>): HasitJWTPayload {
   return user;
 }
 
-export function getAppName(c: Context<AuthEnv>): string {
+export function getAppName(c: UserContext): string {
   return c.get('appName') || 'unknown';
 }

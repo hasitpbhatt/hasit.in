@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
 import { financeApp } from '../src/apps/finance/index.ts';
-import { quizApp } from '../src/apps/quiz/index.ts';
+import quizAiProxy from '../apps/quiz/quiz/proxy/worker.js';
 
 const env = {} as Parameters<typeof financeApp.fetch>[1];
 
@@ -33,34 +33,42 @@ test('finance API routes include preflight and Worker-hosted stock page assets',
   assert.equal(invalidSymbol.status, 404);
 });
 
-test('quiz AI proxy validates origin and request payload without contacting Mistral', async () => {
-  const env = {
-    MISTRAL_API_KEY: 'test-key',
-  } as Parameters<typeof quizApp.fetch>[1];
+test('quiz AI proxy validates origin and request payload without contacting FreeLLM', async () => {
+  const testEnv = {
+    FREELLM_API_KEY: 'test-key',
+  } as Parameters<typeof quizAiProxy.fetch>[1];
 
-  const forbidden = await quizApp.request('/api/ai', {
+  const authHeaders = {
+    'X-Freellm-Api-Key': 'test-freellm-key',
+    'Content-Type': 'application/json',
+  };
+
+  // Test forbidden origin
+  const forbidden = await quizAiProxy.fetch(new Request('https://quiz.hasit.in/api/ai', {
     method: 'POST',
     headers: {
+      ...authHeaders,
       Origin: 'https://attacker.example',
-      'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ model: 'mistral-small-latest', messages: [{ role: 'user', content: 'hi' }] }),
-  }, env);
+    body: JSON.stringify({ model: 'gemini-2.5-flash', messages: [{ role: 'user', content: 'hi' }] }),
+  }), testEnv);
   assert.equal(forbidden.status, 403);
 
-  const invalidModel = await quizApp.request('/api/ai', {
+  // Test invalid model
+  const invalidModel = await quizAiProxy.fetch(new Request('https://quiz.hasit.in/api/ai', {
     method: 'POST',
     headers: {
+      ...authHeaders,
       Origin: 'https://quiz.hasit.in',
-      'Content-Type': 'application/json',
     },
     body: JSON.stringify({ model: 'unexpected', messages: [{ role: 'user', content: 'hi' }] }),
-  }, env);
+  }), testEnv);
   assert.equal(invalidModel.status, 400);
 
-  const preflight = await quizApp.request('/api/ai', {
+  // Test preflight
+  const preflight = await quizAiProxy.fetch(new Request('https://quiz.hasit.in/api/ai', {
     method: 'OPTIONS',
     headers: { Origin: 'https://quiz.hasit.in' },
-  }, env);
+  }), testEnv);
   assert.equal(preflight.status, 204);
 });

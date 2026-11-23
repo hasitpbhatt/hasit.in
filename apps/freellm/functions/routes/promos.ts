@@ -13,7 +13,7 @@
 //   GET  /api/balance         global + per-model credit balances
 
 import { Hono } from 'hono'
-import { requireAdmin, requireAuth } from '../lib/middleware'
+import { centralAuthMiddleware, getCentralUser } from '../lib/middleware'
 import { newId } from '../lib/crypto'
 import { slugify } from '../lib/validate'
 import { expireAdminGrants } from '../lib/credit-grants'
@@ -36,13 +36,13 @@ export function normalizePromoCode(input: unknown): string | null {
 // Consumer endpoints
 // =====================================================================
 
-app.use('/api/promos/*', requireAuth)
-app.use('/api/balance', requireAuth)
+app.use('/api/promos/*', centralAuthMiddleware)
+app.use('/api/balance', centralAuthMiddleware)
 
 // ------------------------------------------------------------ balance
 
 app.get('/api/balance', async (c) => {
-  const user = c.get('user')
+  const user = getCentralUser(c)
   // Lazy expiry sweeps so the displayed balance reflects any expired grants.
   // Best-effort — a race just defers to the next sweep.
   await expirePromoCredits(c.env.DB, user.id).catch(() => {})
@@ -50,7 +50,7 @@ app.get('/api/balance', async (c) => {
   const freshUser = await c.env.DB.prepare('SELECT balance_credits FROM freellm_users WHERE id = ?')
     .bind(user.id)
     .first<{ balance_credits: number }>()
-  const globalBalance = freshUser?.balance_credits ?? user.balance_credits
+  const globalBalance = freshUser?.balance_credits ?? 0
   const grants = await c.env.DB.prepare(
     `SELECT g.credits, m.id AS model_id, m.slug, m.label
      FROM freellm_model_credit_grants g JOIN freellm_models m ON m.id = g.model_id
@@ -103,7 +103,7 @@ export function promoRedemptionStatements(
       per_user_limit: number
       expires_at: number | null
     }
-    user: { id: string }
+        user: { id: string }
     redemptionId: string
     ledgerId: string
     timestamp: number
@@ -130,14 +130,14 @@ export function promoRedemptionStatements(
       .bind(
         redemptionId,
         promo.id,
-        user.id,
+              user.id,
         promo.credits,
         promo.model_id,
         timestamp,
         promo.expires_at,
         promo.id,
         promo.id,
-        user.id,
+              user.id,
         promo.per_user_limit,
       ),
     // Bump the denormalized counter, only when the row above landed.
@@ -157,7 +157,7 @@ export function promoRedemptionStatements(
       )
       .bind(
         ledgerId,
-        user.id,
+              user.id,
         promo.credits,
         JSON.stringify({ promo_code: promo.code, redemption_id: redemptionId, model_id: promo.model_id }),
         timestamp,
@@ -191,7 +191,7 @@ export function promoRedemptionStatements(
 }
 
 app.post('/api/promos/redeem', async (c) => {
-  const user = c.get('user')
+  const user = getCentralUser(c)
   const body = await c.req.json<{ code?: unknown }>().catch(() => null)
   const code = normalizePromoCode(body?.code)
   if (!code) {
@@ -227,7 +227,12 @@ app.post('/api/promos/redeem', async (c) => {
     return c.json({ error: 'sold_out', message: 'That promo code has been fully redeemed.' }, 409)
   }
 
-  const accountAgeHours = (timestamp - user.created_at) / 3_600_000
+  // Fetch user's created_at from freellm_users table
+  const freellmUser = await c.env.DB.prepare('SELECT created_at FROM freellm_users WHERE id = ?').bind(user.id).first<{ created_at: number }>()
+  if (!freellmUser) {
+    return c.json({ error: 'user_not_found', message: 'User not found in freellm system.' }, 404)
+  }
+  const accountAgeHours = (timestamp - freellmUser.created_at) / 3_600_000
   if (accountAgeHours < promo.min_account_age_hours) {
     const hoursLeft = Math.ceil(promo.min_account_age_hours - accountAgeHours)
     return c.json(
@@ -239,7 +244,7 @@ app.post('/api/promos/redeem', async (c) => {
   const usedCount = await c.env.DB.prepare(
     'SELECT COUNT(*) AS n FROM freellm_promo_redemptions WHERE promo_code_id = ? AND user_id = ?',
   )
-    .bind(promo.id, user.id)
+      .bind(promo.id, user.id)
     .first<{ n: number }>()
   if ((usedCount?.n ?? 0) >= promo.per_user_limit) {
     return c.json({ error: 'already_redeemed', message: 'You have already redeemed this code.' }, 409)
@@ -284,7 +289,7 @@ app.post('/api/promos/redeem', async (c) => {
     const used = await c.env.DB.prepare(
       'SELECT COUNT(*) AS n FROM freellm_promo_redemptions WHERE promo_code_id = ? AND user_id = ?',
     )
-      .bind(promo.id, user.id)
+          .bind(promo.id, user.id)
       .first<{ n: number }>()
     if ((used?.n ?? 0) >= promo.per_user_limit) {
       return c.json({ error: 'already_redeemed', message: 'You have already redeemed this code.' }, 409)
@@ -312,7 +317,7 @@ app.post('/api/promos/redeem', async (c) => {
 // --------------------------------------------------------------- mine
 
 app.get('/api/promos/mine', async (c) => {
-  const user = c.get('user')
+  const user = getCentralUser(c)
   const rows = await c.env.DB.prepare(
     `SELECT r.credits, r.created_at, p.code, m.slug AS model_slug, m.label AS model_label
      FROM freellm_promo_redemptions r
@@ -332,7 +337,9 @@ app.get('/api/promos/mine', async (c) => {
 // Admin endpoints
 // =====================================================================
 
-app.use('/api/admin/promos/*', requireAuth, requireAdmin)
+import { requireCentralAuthAdmin } from '../lib/middleware'
+
+app.use('/api/admin/promos/*', centralAuthMiddleware, requireCentralAuthAdmin)
 
 app.get('/api/admin/promos', async (c) => {
   const rows = await c.env.DB.prepare(
@@ -344,7 +351,7 @@ app.get('/api/admin/promos', async (c) => {
 })
 
 app.post('/api/admin/promos', async (c) => {
-  const admin = c.get('user')
+  const admin = getCentralUser(c)
   const body = await c.req.json<Record<string, unknown>>().catch(() => null)
   if (!body) return c.json({ error: 'invalid_body', message: 'Send JSON.' }, 400)
 

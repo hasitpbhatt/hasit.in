@@ -1,0 +1,14 @@
+const code = 'import { useCallback, useEffect, useState, type ReactNode } from "react";\nimport { api } from "./api";\nimport { AuthContext } from "./authContext";\nimport type { User } from "./types";\nconst AUTH_DOMAIN = "https://auth.hasit.in";\nexport function AuthProvider({ children }: { children: ReactNode }) {\n  const [user, setUserState] = useState<User | null>(null);\n  const [loading, setLoadingState] = useState(true);\n  const [accessToken, setAccessTokenState] = useState<string | null>(() => {\n    if (typeof window !== "undefined") {\n      return localStorage.getItem("freellm_access_token");\n    }\n    return null;\n  });\n  const authenticatedFetch = useCallback(async <T>(path: string, init?: RequestInit): Promise<T> => {\n    return null as any;\n  }, [accessToken]);\n}';
+console.log('Char 674:', JSON.stringify(code[673]));
+console.log('Char 689:', JSON.stringify(code[688]));
+console.log('Char 703:', JSON.stringify(code[702]));
+console.log('Char 716:', JSON.stringify(code[715]));
+console.log('Char 717:', JSON.stringify(code[716]));
+console.log('Char 748:', JSON.stringify(code[747]));
+console.log('Char 763:', JSON.stringify(code[762]));
+console.log('Context 670-680:', JSON.stringify(code.substring(670, 680)));
+console.log('Context 685-695:', JSON.stringify(code.substring(685, 695)));
+console.log('Context 700-710:', JSON.stringify(code.substring(700, 710)));
+console.log('Context 713-723:', JSON.stringify(code.substring(713, 723)));
+console.log('Context 745-755:', JSON.stringify(code.substring(745, 755)));
+console.log('Context 760-770:', JSON.stringify(code.substring(760, 770)));

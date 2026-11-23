@@ -22,6 +22,10 @@ export interface Env {
   TURNSTILE_SECRET: string;
   FAUCETPAY_API_KEY: string;
   ADMIN_SECRET?: string;
+  FREELLM_API_KEY?: string;
+  FREELLM_MODEL?: string;
+  FREELLM_SYSTEM_API_KEY?: string;
+  // Deprecated - fallback for apps migrating from Mistral
   MISTRAL_API_KEY?: string;
   MISTRAL_MODEL?: string;
   ENCRYPTION_KEY: string;
@@ -30,8 +34,6 @@ export interface Env {
   RESEND_API_KEY?: string;
   GOOGLE_OAUTH_CLIENT_ID?: string;
   GOOGLE_OAUTH_CLIENT_SECRET?: string;
-  ANTIGRAVITY_OAUTH_CLIENT_ID?: string;
-  ANTIGRAVITY_OAUTH_CLIENT_SECRET?: string;
   PUBLIC_ORIGIN?: string;
   JWT_PRIVATE_KEY: string;
   JWT_PUBLIC_KEY: string;

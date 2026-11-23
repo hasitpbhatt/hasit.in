@@ -205,6 +205,16 @@ export const freellm = {
       `).bind(userId).all(),
     delete: (db: D1Database, id: number) =>
       db.prepare('DELETE FROM freellm_api_keys WHERE id = ?').bind(id).run(),
+
+    /** Get user's first active API key for BYOK usage */
+    getDefaultForUser: (db: D1Database, userId: number) =>
+      db.prepare(`
+        SELECT id, provider, key_hash, key_encrypted, label
+        FROM freellm_api_keys
+        WHERE user_id = ?
+        ORDER BY created_at ASC
+        LIMIT 1
+      `).bind(userId).first(),
   },
 };
 

@@ -1,11 +1,10 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Navigate, useSearchParams } from 'react-router-dom'
 import { Card } from '../components/ui'
 import { GoogleButton } from '../components/GoogleButton'
 import { useAuth } from '../lib/useAuth'
 
-// The only auth page: Google sign-in creates the account on first use, so
-// sign-in and sign-up are the same button. /register redirects here.
+const AUTH_DOMAIN = 'https://auth.hasit.in'
 
 /** Referral code stashed by the landing page before sign-in (may be absent). */
 function stashedReferral(): string {
@@ -18,7 +17,7 @@ function stashedReferral(): string {
 }
 
 export default function Login() {
-  const { user, loading } = useAuth()
+  const { user, loading, setToken } = useAuth()
   const [searchParams] = useSearchParams()
   const [referred] = useState(() => stashedReferral() !== '')
   const [referral] = useState(stashedReferral)
@@ -32,6 +31,29 @@ export default function Login() {
   } catch {
     oauthError = 'Unknown error'
   }
+
+  // Handle OAuth callback: exchange code for access token
+  useEffect(() => {
+    const code = searchParams.get('code')
+    const session = searchParams.get('session')
+    
+    if (code && session) {
+      // Exchange the one-time code for an access token
+      exchangeCode(code)
+        .then(({ accessToken }) => {
+          setToken(accessToken)
+          // Clean up URL and redirect
+          window.history.replaceState({}, '', redirectTo)
+          window.location.href = redirectTo
+        })
+        .catch((err) => {
+          console.error('OAuth exchange failed:', err)
+          // Show error and let user retry
+          window.history.replaceState({}, '', '/login?error=auth_failed')
+          window.location.href = '/login?error=auth_failed'
+        })
+    }
+  }, [searchParams, redirectTo, setToken])
 
   if (!loading && user) {
     return <Navigate to={redirectTo} replace />
@@ -60,4 +82,20 @@ export default function Login() {
       </Card>
     </div>
   )
+}
+
+async function exchangeCode(code: string): Promise<{ accessToken: string; sessionId: string }> {
+  const response = await fetch(`${AUTH_DOMAIN}/exchange`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({ code }),
+  })
+  
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: 'Exchange failed' }))
+    throw new Error(error.error || 'Exchange failed')
+  }
+  
+  return response.json()
 }

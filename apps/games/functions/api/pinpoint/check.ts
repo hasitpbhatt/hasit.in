@@ -24,7 +24,8 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     return error('Too many requests — slow down', 429)
   }
 
-  if (!context.env.MISTRAL_API_KEY) {
+  // Use system FreeLLM API key for Games pinpoint (internal service account)
+  if (!context.env.FREELLM_SYSTEM_API_KEY && !context.env.FREELLM_API_KEY && !context.env.MISTRAL_API_KEY) {
     return error('Pinpoint check unavailable', 503)
   }
   const body = await readBody<CheckBody>(context.request)
@@ -41,8 +42,8 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
 
   try {
     const correct = await llmGuessMatchesCategory(guess, clues, category, {
-      apiKey: context.env.MISTRAL_API_KEY,
-      model: context.env.MISTRAL_MODEL,
+      apiKey: context.env.FREELLM_SYSTEM_API_KEY || context.env.FREELLM_API_KEY || context.env.MISTRAL_API_KEY!,
+      model: (context.env.FREELLM_MODEL || context.env.MISTRAL_MODEL) ?? 'gemini-2.5-flash',
     })
     return json({ correct })
   } catch {

@@ -181,7 +181,7 @@ GA4 and AdSense identifiers are not hardcoded in page templates. `src/lib/site-c
 | `JWT_PRIVATE_KEY` | ES256 PEM private key |
 | `JWT_PUBLIC_KEY` | ES256 PEM public key |
 | `GOOGLE_CLIENT_SECRET` | Google OAuth client secret |
-| `MISTRAL_API_KEY` | Quiz AI proxy and Finance research narrative |
+| `FREELLM_API_KEY` | FreeLLM API key for Quiz AI proxy, Finance research narrative, Games pinpoint |
 | `ADMIN_PASSWORD` | Only needed until the admin password has been stored in `trx_settings`; it bootstraps the first login |
 
 Set each secret with a command such as:

@@ -187,7 +187,7 @@ npx wrangler secret put FAUCETPAY_API_KEY
 npx wrangler secret put JWT_PRIVATE_KEY
 npx wrangler secret put JWT_PUBLIC_KEY
 npx wrangler secret put GOOGLE_CLIENT_SECRET
-npx wrangler secret put MISTRAL_API_KEY
+npx wrangler secret put FREELLM_API_KEY
 npx wrangler secret put ADMIN_PASSWORD   # Only needed until the first admin login
 ```
 
@@ -367,7 +367,7 @@ A deploy must never be able to mutate the D1 schema, so a normal push to `main` 
 1. Verify ownership and route availability for `trx.hasit.in` and `blog.hasit.in`.
 2. Reconcile the legacy root FreeLLM schema with the imported upstream migration chain; inspect the actual D1 schema read-only and prepare a data-preserving migration plan before any D1 changes.
 3. Keep Interview on Pages with its planned Pages-local D1/password auth; add a shared Worker API only if an explicit plan specifies one.
-4. Configure the required Worker secrets, including FreeLLM's `ENCRYPTION_KEY`, email/OAuth settings, `ADMIN_PASSWORD` on a fresh database, and `MISTRAL_API_KEY` for AI features.
+4. Configure the required Worker secrets, including FreeLLM's `ENCRYPTION_KEY`, email/OAuth settings, `ADMIN_PASSWORD` on a fresh database, and `FREELLM_API_KEY` for AI features (Quiz, Finance, Games).
 5. Review and apply production D1 migrations only after an explicit production change window.
 6. Perform deployment, DNS cutover, and legacy-service retirement only after explicit approval.
 

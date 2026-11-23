@@ -18,7 +18,7 @@
 //   every tier beats the 2,000cr flat-rate chat so a win always buys messages.
 
 import { Hono } from 'hono'
-import { requireAuth } from '../lib/middleware'
+import { centralAuthMiddleware, getCentralUser } from '../lib/middleware'
 import { newId } from '../lib/crypto'
 import type { Bindings, Variables } from '../lib/types'
 import { updateWeeklyQuestProgress } from './economy'
@@ -375,8 +375,8 @@ export function clearClaimStatements(
 
 // ------------------------------------------------------------------ status
 
-app.get('/api/games/status', requireAuth, async (c) => {
-  const user = c.get('user')
+app.get('/api/games/status', centralAuthMiddleware, async (c) => {
+  const user = getCentralUser(c)
   const games = {} as Record<GameKind, { plays_left: number; plays_cap: number }>
   for (const game of CLEAR_GAMES) {
     const used = await paidPlaysToday(c.env.DB, user.id, game)
@@ -425,8 +425,8 @@ app.get('/api/games/status', requireAuth, async (c) => {
 
 // ------------------------------------------------------------------- start
 
-app.post('/api/games/:game/start', requireAuth, async (c) => {
-  const user = c.get('user')
+app.post('/api/games/:game/start', centralAuthMiddleware, async (c) => {
+  const user = getCentralUser(c)
   const gate = verifiedGate(user)
   if (gate) return c.json(gate, 403)
 
@@ -461,8 +461,8 @@ app.post('/api/games/:game/start', requireAuth, async (c) => {
 
 // -------------------------------------------------------------------- flip
 
-app.post('/api/games/memory/flip', requireAuth, async (c) => {
-  const user = c.get('user')
+app.post('/api/games/memory/flip', centralAuthMiddleware, async (c) => {
+  const user = getCentralUser(c)
   const gate = verifiedGate(user)
   if (gate) return c.json(gate, 403)
 
@@ -505,8 +505,8 @@ app.post('/api/games/memory/flip', requireAuth, async (c) => {
 
 // ------------------------------------------------------------------- claim
 
-app.post('/api/games/:game/claim', requireAuth, async (c) => {
-  const user = c.get('user')
+app.post('/api/games/:game/claim', centralAuthMiddleware, async (c) => {
+  const user = getCentralUser(c)
   const gate = verifiedGate(user)
   if (gate) return c.json(gate, 403)
 
@@ -580,7 +580,7 @@ app.post('/api/games/:game/claim', requireAuth, async (c) => {
   let batchResult: Array<{ success: boolean; meta?: { changes?: number } }>
   try {
     batchResult = (await c.env.DB.batch(
-      gameClaimStatements(c.env.DB, { userId: user.id, game, roundId, reward, detail, timestamp }),
+        gameClaimStatements(c.env.DB, { userId: user.id, game, roundId, reward, detail, timestamp }),
     )) as unknown as Array<{ success: boolean; meta?: { changes?: number } }>
   } catch (err) {
     if (err instanceof Error && err.message.includes('UNIQUE constraint failed: freellm_credit_ledger')) {
@@ -590,31 +590,31 @@ app.post('/api/games/:game/claim', requireAuth, async (c) => {
   }
   const guard = batchResult[0]
   if (!guard?.success || guard.meta?.changes === 0) {
-    const reason = await claimBlockReason(c.env.DB, user.id, 'play', game)
+      const reason = await claimBlockReason(c.env.DB, user.id, 'play', game)
     return c.json({ error: reason.error, message: reason.message }, 409)
   }
 
   // Update weekly quest progress
   if (game === 'typing') {
     const wpm = Math.round(round.detail!.length / 5 / (seconds / 60))
-    await updateWeeklyQuestProgress(c.env.DB, user.id, 'typing_wpm', wpm)
+      await updateWeeklyQuestProgress(c.env.DB, user.id, 'typing_wpm', wpm)
   } else if (game === 'memory') {
     const moves = memoryMovesFromFlips(round.flips ?? 0)
     if (moves !== null) {
-      await updateWeeklyQuestProgress(c.env.DB, user.id, 'memory_moves', moves)
+        await updateWeeklyQuestProgress(c.env.DB, user.id, 'memory_moves', moves)
     }
   }
 
   const balance = await c.env.DB.prepare('SELECT balance_credits FROM freellm_users WHERE id = ?')
-    .bind(user.id)
+      .bind(user.id)
     .first<{ balance_credits: number }>()
   return c.json({ ok: true, reward, balance: balance?.balance_credits ?? 0 })
 })
 
 // ------------------------------------------------------------ clear bonus
 
-app.post('/api/games/clear/claim', requireAuth, async (c) => {
-  const user = c.get('user')
+app.post('/api/games/clear/claim', centralAuthMiddleware, async (c) => {
+  const user = getCentralUser(c)
   const gate = verifiedGate(user)
   if (gate) return c.json(gate, 403)
 
@@ -649,8 +649,8 @@ app.post('/api/games/clear/claim', requireAuth, async (c) => {
 
 // ------------------------------------------------------------ level bonus
 
-app.post('/api/games/level/claim', requireAuth, async (c) => {
-  const user = c.get('user')
+app.post('/api/games/level/claim', centralAuthMiddleware, async (c) => {
+  const user = getCentralUser(c)
   const gate = verifiedGate(user)
   if (gate) return c.json(gate, 403)
 

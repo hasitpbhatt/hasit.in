@@ -197,24 +197,26 @@ function renderRecentPayouts(payouts: PayoutRow[]): string {
 
   return `<div id="recent-payouts">
     <h3>Recent Payouts</h3>
-    <table class="table table-striped table-payments">
-      <thead>
-        <tr><th>Date</th><th class="text-center">Address</th><th class="text-right">Reward</th></tr>
-      </thead>
-      <tbody>
-        ${payouts
-          .map((p, i) => {
-            const addr = p.address;
-            const half = Math.ceil(addr.length / 2);
-            return `<tr class="${i % 2 === 0 ? 'even' : 'odd'}">
-            <td>${escapeHtml(new Date(p.time * 1000).toLocaleString())}</td>
-            <td class="text-center"><span class="line">${escapeHtml(addr.slice(0, half))}</span><span class="line">${escapeHtml(addr.slice(half))}</span></td>
-            <td class="text-right">${escapeHtml(p.reward)} satoshi</td>
-          </tr>`;
-          })
-          .join('')}
-      </tbody>
-    </table>
+    <div class="table-responsive">
+      <table class="table table-striped table-payments">
+        <thead>
+          <tr><th>Date</th><th class="text-center">Address</th><th class="text-right">Reward</th></tr>
+        </thead>
+        <tbody>
+          ${payouts
+            .map((p, i) => {
+              const addr = p.address;
+              const half = Math.ceil(addr.length / 2);
+              return `<tr class="${i % 2 === 0 ? 'even' : 'odd'}">
+              <td>${escapeHtml(new Date(p.time * 1000).toLocaleString())}</td>
+              <td class="text-center"><span class="line">${escapeHtml(addr.slice(0, half))}</span><span class="line">${escapeHtml(addr.slice(half))}</span></td>
+              <td class="text-right">${escapeHtml(p.reward)} satoshi</td>
+            </tr>`;
+            })
+            .join('')}
+        </tbody>
+      </table>
+    </div>
   </div>`;
 }
 

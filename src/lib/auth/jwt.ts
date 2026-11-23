@@ -46,6 +46,7 @@ export interface HasitJWTPayload extends JWTPayload {
   picture: string;
   app: string;
   scope: string;
+  email_verified: boolean;
 }
 
 export async function signJWT(payload: Omit<HasitJWTPayload, 'iat' | 'exp'>, env: Env, expiresIn = '15m'): Promise<string> {

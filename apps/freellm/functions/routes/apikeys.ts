@@ -9,7 +9,7 @@
 // anti-farming gate the earning surface uses.
 
 import { Hono } from 'hono'
-import { requireAuth } from '../lib/middleware'
+import { centralAuthMiddleware, getCentralUser } from '../lib/middleware'
 import { newApiToken, newId, sha256Hex } from '../lib/crypto'
 import { getUsableConnection } from '../lib/connections'
 import type { Bindings, FreellmStateStore, Variables } from '../lib/types'
@@ -44,11 +44,11 @@ async function rateLimited(kv: FreellmStateStore, userId: string): Promise<boole
   return false
 }
 
-app.use('/api/tokens', requireAuth)
-app.use('/api/tokens/*', requireAuth)
+app.use('/api/tokens', centralAuthMiddleware)
+app.use('/api/tokens/*', centralAuthMiddleware)
 
 app.get('/api/tokens', async (c) => {
-  const user = c.get('user')
+  const user = getCentralUser(c)
   const rows = await c.env.DB.prepare(
     'SELECT id, label, token_prefix, connection_id, last_used_at, created_at FROM freellm_api_tokens WHERE user_id = ? ORDER BY created_at DESC',
   )
@@ -57,8 +57,8 @@ app.get('/api/tokens', async (c) => {
   return c.json({ tokens: rows.results })
 })
 
-app.post('/api/tokens', async (c) => {
-  const user = c.get('user')
+app.post('/api/tokens', centralAuthMiddleware, async (c) => {
+  const user = getCentralUser(c)
   if (user.email_verified !== 1) {
     return c.json(VERIFIED_REQUIRED, 403)
   }
@@ -103,8 +103,8 @@ app.post('/api/tokens', async (c) => {
   )
 })
 
-app.delete('/api/tokens/:id', async (c) => {
-  const user = c.get('user')
+app.delete('/api/tokens/:id', centralAuthMiddleware, async (c) => {
+  const user = getCentralUser(c)
   const id = c.req.param('id')
   const row = await c.env.DB.prepare('SELECT id FROM freellm_api_tokens WHERE id = ? AND user_id = ?')
     .bind(id, user.id)

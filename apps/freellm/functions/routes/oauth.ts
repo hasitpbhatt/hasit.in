@@ -5,7 +5,7 @@
 // registry (see functions/lib/oauth.ts for the source map).
 
 import { Hono, type Context } from 'hono'
-import { requireAuth } from '../lib/middleware'
+import { centralAuthMiddleware, getCentralUser } from '../lib/middleware'
 import { accountFromIdToken, getOAuthProviderConfig, isOAuthProvider, OAUTH_PROVIDERS, oauthProviderList, providerClientId, providerClientSecret, providerIdForVaultRow, type OAuthProviderConfig } from '../lib/oauth'
 import {
   fetchQoderUserInfo,
@@ -195,7 +195,7 @@ async function saveOAuthVaultKey(
 // =====================================================================
 // Provider list (drives the Connect buttons; only wired-up providers)
 // =====================================================================
-app.use('/api/oauth/*', requireAuth)
+app.use('/api/oauth/*', centralAuthMiddleware)
 
 app.get('/api/oauth/providers', async (c) => {
   return c.json({
@@ -214,7 +214,7 @@ app.get('/api/oauth/providers', async (c) => {
 // =====================================================================
 
 app.get('/api/oauth/start/:provider', async (c) => {
-  const user = c.get('user')
+  const user = getCentralUser(c)
   const providerId = c.req.param('provider')
 
   if (!isOAuthProvider(providerId)) {
@@ -236,7 +236,7 @@ app.get('/api/oauth/start/:provider', async (c) => {
   const state = crypto.randomUUID()
 
   if (config.flowType === 'device_code') {
-    return startDeviceFlow(c, config, providerId, user.id, state)
+      return startDeviceFlow(c, config, providerId, user.id, state)
   }
 
   // Authorization Code Flow with PKCE (Codex, Google, Antigravity)
@@ -440,8 +440,8 @@ app.get('/api/oauth/callback/:provider', async (c) => {
   // The browser that started the flow must still be signed in as the same
   // user: otherwise a session swap mid-flow (shared computer) would land one
   // person's freshly-authorized token in another person's vault.
-  const me = c.get('user')
-  if (!me || pkceData.userId !== me.id) {
+    const me = getCentralUser(c)
+    if (!me || pkceData.userId !== me.id) {
     return c.html(`<h1>Signed in as someone else</h1><p>The account changed since this connect started — start over from /keys.</p><a href="${appPath('/keys', c.env.APP_BASE_PATH)}">Back to Keys</a>`, 403)
   }
 
@@ -503,8 +503,8 @@ app.get('/api/oauth/callback/:provider', async (c) => {
 // =====================================================================
 // Device code polling endpoint
 // =====================================================================
-app.post('/api/oauth/poll/:provider', async (c) => {
-  const user = c.get('user')
+app.post('/api/oauth/poll/:provider', centralAuthMiddleware, async (c) => {
+  const user = getCentralUser(c)
   const providerId = c.req.param('provider')
   const body = await c.req.json().catch(() => ({}))
   const { state } = body as { state?: string }
@@ -559,7 +559,7 @@ app.post('/api/oauth/poll/:provider', async (c) => {
       if (polled.status === 'pending') return c.json({ status: 'pending' })
       const userInfo = await fetchQoderUserInfo(config.userInfoUrl, polled.accessToken)
       const keyId = await saveOAuthVaultKey(c.env, {
-        userId: user.id,
+              userId: user.id,
         config,
         accessToken: polled.accessToken,
         refreshToken: polled.refreshToken,
@@ -627,7 +627,7 @@ app.post('/api/oauth/poll/:provider', async (c) => {
     const expiresAt = data.expires_in ? Date.now() + data.expires_in * 1000 : null
 
     const keyId = await saveOAuthVaultKey(c.env, {
-      userId: user.id,
+          userId: user.id,
       config,
       accessToken: data.access_token,
       refreshToken: data.refresh_token,
@@ -646,8 +646,8 @@ app.post('/api/oauth/poll/:provider', async (c) => {
 // =====================================================================
 // Refresh token endpoint (on-demand refresh)
 // =====================================================================
-app.post('/api/keys/:id/refresh', requireAuth, async (c) => {
-  const user = c.get('user')
+app.post('/api/keys/:id/refresh', centralAuthMiddleware, async (c) => {
+  const user = getCentralUser(c)
   const id = c.req.param('id')
 
   const row = await c.env.DB.prepare(
@@ -752,7 +752,7 @@ app.post('/api/keys/:id/refresh', requireAuth, async (c) => {
     await c.env.DB.prepare(
       `INSERT INTO freellm_key_health_events (id, connection_id, user_id, event_type, created_at)
        VALUES (?, ?, ?, ?, ?)`,
-    ).bind(successEventId, id, user.id, 'oauth_refresh_success', refreshedAt).run()
+        ).bind(successEventId, id, user.id, 'oauth_refresh_success', refreshedAt).run()
 
     return c.json({
       ok: true,

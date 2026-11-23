@@ -17,16 +17,16 @@
 // key_mode='byok' — it never touches The Pool or any shared credential.
 
 import { Hono, type Context } from 'hono'
-import { requireAuthOrToken } from '../lib/middleware'
+import { centralAuthMiddleware, getCentralUser, canAccessCentralUserModel } from '../lib/middleware'
 import { computeSpendable, estimateReserve, placeHold, settleRequest, IMAGE_RESERVE_TOKENS, type Usage } from '../lib/metering'
 import { contentImageCount, contentTextLength, parseOpenAiMessages, type ChatMessage } from '../lib/openai-messages'
 import { aliasSupportsVision, loadAlias, openCall, recordOutcome } from '../lib/providers'
-import { canAccessModel, tierGatedMessage } from '../lib/tiers'
 import { newId, sha256Hex } from '../lib/crypto'
 import { dialConnection, connectionSettleModel, getUsableConnection } from '../lib/connections'
 import { readJsonBody } from '../lib/request-body'
 import { allowRequest } from '../lib/ratelimit'
 import { EMPTY_COMPLETION_REASON, isBillableCompletion } from '../lib/completion'
+import { tierGatedMessage } from '../lib/tiers'
 import type { Bindings, Variables } from '../lib/types'
 
 const app = new Hono<{ Bindings: Bindings; Variables: Variables }>()
@@ -173,8 +173,8 @@ function parseCapabilities(raw: string | null): string[] {
 
 // ------------------------------------------------------------- chat completions
 
-app.post('/v1/chat/completions', requireAuthOrToken, async (c) => {
-  const user = c.get('user')
+app.post('/v1/chat/completions', centralAuthMiddleware, async (c) => {
+  const user = getCentralUser(c)
   const perUser = await allowRequest(
     c.env.freellm_sessions,
     `rate:v1:user:${user.id}`,
@@ -308,7 +308,7 @@ app.post('/v1/chat/completions', requireAuthOrToken, async (c) => {
   }
 
   // Tier gate runs before any reserve/hold so a denied caller is never charged.
-  if (!canAccessModel(user, alias.model)) {
+    if (!canAccessCentralUserModel(user, alias.model)) {
     return c.json(
       openAiBody('invalid_request_error', tierGatedMessage(alias.model), 'upgrade_required'),
       403,
@@ -369,7 +369,7 @@ app.post('/v1/chat/completions', requireAuthOrToken, async (c) => {
   })
   if ('error' in opened) {
     await settleRequest(c.env.DB, {
-      userId: user.id,
+          userId: user.id,
       requestId,
       model: alias.model,
       providerLabel: 'all-configs-failed',
@@ -395,7 +395,7 @@ app.post('/v1/chat/completions', requireAuthOrToken, async (c) => {
     for (let attempt = 0; attempt < 2; attempt += 1) {
       try {
         result = await settleRequest(c.env.DB, {
-          userId: user.id,
+                          userId: user.id,
           requestId,
           model: alias.model,
           providerLabel: provider.upstream.label,
@@ -656,7 +656,7 @@ async function chatWithConnection(
     upstream = await dialConnection(c, conn, { messages, upstreamModel, maxTokens, stream })
   } catch (err) {
     await settleRequest(c.env.DB, {
-      userId: user.id,
+              userId: user.id,
       requestId,
       model: settleModel,
       providerLabel: conn.label,
@@ -670,7 +670,7 @@ async function chatWithConnection(
     await c.env.DB.prepare(
       `INSERT INTO freellm_key_health_events (id, connection_id, user_id, event_type, error_code, error_message, latency_ms, request_model, created_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    ).bind(failEventId, conn.id, user.id, 'chat_failure', 'network_error', err instanceof Error ? err.message : 'network error', failTimestamp - startedAt, upstreamModel, failTimestamp).run()
+        ).bind(failEventId, conn.id, user.id, 'chat_failure', 'network_error', err instanceof Error ? err.message : 'network error', failTimestamp - startedAt, upstreamModel, failTimestamp).run()
     return c.json(
       openAiBody('server_error', `${conn.label} is unreachable: ${err instanceof Error ? err.message : 'network error'}`, 'upstream_failed'),
       502,
@@ -679,7 +679,7 @@ async function chatWithConnection(
   if (!upstream.ok) {
     const errText = (await upstream.text().catch(() => '')).slice(0, 300)
     await settleRequest(c.env.DB, {
-      userId: user.id,
+              userId: user.id,
       requestId,
       model: settleModel,
       providerLabel: conn.label,
@@ -693,7 +693,7 @@ async function chatWithConnection(
     await c.env.DB.prepare(
       `INSERT INTO freellm_key_health_events (id, connection_id, user_id, event_type, error_code, error_message, latency_ms, request_model, created_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    ).bind(failEventId, conn.id, user.id, 'chat_failure', `http_${upstream.status}`, errText, failTimestamp - startedAt, upstreamModel, failTimestamp).run()
+        ).bind(failEventId, conn.id, user.id, 'chat_failure', `http_${upstream.status}`, errText, failTimestamp - startedAt, upstreamModel, failTimestamp).run()
     return c.json(
       openAiBody('server_error', `${conn.label} returned ${upstream.status}: ${errText}`, 'upstream_failed'),
       502,
@@ -704,7 +704,7 @@ async function chatWithConnection(
     for (let attempt = 0; attempt < 2; attempt += 1) {
       try {
         return await settleRequest(c.env.DB, {
-          userId: user.id,
+                          userId: user.id,
           requestId,
           model: settleModel,
           providerLabel: conn.label,
@@ -765,7 +765,7 @@ async function chatWithConnection(
       await c.env.DB.prepare(
         `INSERT INTO freellm_key_health_events (id, connection_id, user_id, event_type, error_code, error_message, latency_ms, request_model, created_at)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      ).bind(failEventId, conn.id, user.id, 'chat_failure', 'parse_error', err instanceof Error ? err.message : 'upstream response failed', failTimestamp - startedAt, upstreamModel, failTimestamp).run()
+            ).bind(failEventId, conn.id, user.id, 'chat_failure', 'parse_error', err instanceof Error ? err.message : 'upstream response failed', failTimestamp - startedAt, upstreamModel, failTimestamp).run()
       return c.json(openAiBody('server_error', 'The upstream response failed — no charge was made.', 'upstream_failed'), 502)
     }
     if (!isBillableCompletion(content)) {
@@ -776,7 +776,7 @@ async function chatWithConnection(
       await c.env.DB.prepare(
         `INSERT INTO freellm_key_health_events (id, connection_id, user_id, event_type, error_code, error_message, latency_ms, request_model, request_tokens, created_at)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      ).bind(failEventId, conn.id, user.id, 'chat_failure', 'empty_completion', EMPTY_COMPLETION_REASON, failTimestamp - startedAt, upstreamModel, usage?.total ?? 0, failTimestamp).run()
+                ).bind(failEventId, conn.id, user.id, 'chat_failure', 'empty_completion', EMPTY_COMPLETION_REASON, failTimestamp - startedAt, upstreamModel, usage?.total ?? 0, failTimestamp).run()
       return c.json(
         openAiBody(
           'server_error',
@@ -793,7 +793,7 @@ async function chatWithConnection(
     await c.env.DB.prepare(
       `INSERT INTO freellm_key_health_events (id, connection_id, user_id, event_type, latency_ms, request_model, request_tokens, created_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-    ).bind(successEventId, conn.id, user.id, 'chat_success', successTimestamp - startedAt, upstreamModel, usage?.total ?? 0, successTimestamp).run()
+            ).bind(successEventId, conn.id, user.id, 'chat_success', successTimestamp - startedAt, upstreamModel, usage?.total ?? 0, successTimestamp).run()
     return c.json({
       id: completionId,
       object: 'chat.completion',
@@ -892,7 +892,7 @@ async function chatWithConnection(
           await c.env.DB.prepare(
             `INSERT INTO freellm_key_health_events (id, connection_id, user_id, event_type, latency_ms, request_model, request_tokens, created_at)
              VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-          ).bind(successEventId, conn.id, user.id, 'chat_success', latencyMs, upstreamModel, usage?.total ?? 0, successTimestamp).run()
+                              ).bind(successEventId, conn.id, user.id, 'chat_success', latencyMs, upstreamModel, usage?.total ?? 0, successTimestamp).run()
         } else {
           await settle('failed', null, EMPTY_COMPLETION_REASON)
           // Log health event: chat failure (empty completion)
@@ -901,7 +901,7 @@ async function chatWithConnection(
           await c.env.DB.prepare(
             `INSERT INTO freellm_key_health_events (id, connection_id, user_id, event_type, error_code, error_message, latency_ms, request_model, request_tokens, created_at)
              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-          ).bind(failEventId, conn.id, user.id, 'chat_failure', 'empty_completion', EMPTY_COMPLETION_REASON, failTimestamp - startedAt, upstreamModel, usage?.total ?? 0, failTimestamp).run()
+                              ).bind(failEventId, conn.id, user.id, 'chat_failure', 'empty_completion', EMPTY_COMPLETION_REASON, failTimestamp - startedAt, upstreamModel, usage?.total ?? 0, failTimestamp).run()
         }
       } catch (err) {
         console.error('[v1:connection] settle failed in flush', completionId, err)
@@ -920,7 +920,7 @@ async function chatWithConnection(
           await c.env.DB.prepare(
             `INSERT INTO freellm_key_health_events (id, connection_id, user_id, event_type, error_code, error_message, latency_ms, request_model, created_at)
              VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-          ).bind(failEventId, conn.id, user.id, 'chat_failure', 'client_disconnected', 'Client disconnected', failTimestamp - startedAt, upstreamModel, failTimestamp).run()
+                              ).bind(failEventId, conn.id, user.id, 'chat_failure', 'client_disconnected', 'Client disconnected', failTimestamp - startedAt, upstreamModel, failTimestamp).run()
         } catch (err) {
           console.error('[v1:connection] settle failed in cancel', completionId, err)
         }
