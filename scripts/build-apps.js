@@ -1,13 +1,14 @@
 #!/usr/bin/env node
 
 import { spawnSync } from 'node:child_process';
-import { access, cp, mkdir, rm } from 'node:fs/promises';
+import { access, cp, mkdir, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const appsRoot = path.join(root, 'apps');
 const outputRoot = path.join(root, 'public', '_spa');
+const publicDir = path.join(root, 'public');
 
 function runNpm(cwd, args) {
   const command = process.platform === 'win32' ? 'npm.cmd' : 'npm';
@@ -108,6 +109,47 @@ async function copyQuiz() {
   });
 }
 
+function generateSitemap() {
+  const BASE_URL = 'https://hasit.in';
+  const SUBDOMAINS = [
+    { subdomain: 'www', paths: ['/'] },
+    { subdomain: 'trx', paths: ['/', '/claim', '/admin', '/p'] },
+    { subdomain: 'trx2', paths: ['/', '/claim', '/admin', '/p'] },
+    { subdomain: 'freellm', paths: ['/', '/chat', '/keys', '/models', '/settings'] },
+    { subdomain: 'fitness', paths: ['/', '/workouts', '/food', '/progress', '/quiz', '/today', '/login'] },
+    { subdomain: 'finance', paths: ['/', '/s'] },
+    { subdomain: 'quiz', paths: ['/'] },
+    { subdomain: 'games', paths: ['/'] },
+    { subdomain: 'auth', paths: ['/', '/login', '/callback'] },
+    { subdomain: '', paths: ['/'] },
+  ];
+
+  const urls = [];
+  urls.push(`${BASE_URL}/`);
+
+  for (const sub of SUBDOMAINS) {
+    const subdomainUrl = sub.subdomain ? `https://${sub.subdomain}.hasit.in` : BASE_URL;
+    for (const p of sub.paths) {
+      urls.push(`${subdomainUrl}${p}`);
+    }
+  }
+
+  const now = new Date().toISOString().split('T')[0];
+
+  const urlEntries = urls.map(url => `  <url>
+    <loc>${url}</loc>
+    <lastmod>${now}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>${url === BASE_URL + '/' ? '1.0' : '0.8'}</priority>
+  </url>`).join('\n');
+
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml">
+${urlEntries}
+</urlset>`;
+}
+
 async function buildApps() {
   await mkdir(outputRoot, { recursive: true });
   await buildFreeLlm();
@@ -115,6 +157,11 @@ async function buildApps() {
   await buildFitness();
   await copyFinance();
   await copyQuiz();
+
+  // Generate sitemap.xml
+  const sitemap = generateSitemap();
+  await writeFile(path.join(publicDir, 'sitemap.xml'), sitemap);
+  console.log('Sitemap generated at public/sitemap.xml');
 }
 
 buildApps().catch((error) => {
