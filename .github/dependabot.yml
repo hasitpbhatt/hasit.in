@@ -1,0 +1,146 @@
+# Dependabot configuration for hasit.in
+# Automated dependency updates for npm packages
+# See https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+
+version: 2
+updates:
+  # Root package.json (main Worker)
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "UTC"
+    labels:
+      - "dependencies"
+      - "npm"
+    commit-message:
+      prefix: "deps(root)"
+      include: "scope"
+    reviewers:
+      - "hasitpbhatt"
+    assignees:
+      - "hasitpbhatt"
+    open-pull-requests-limit: 10
+    allow:
+      - dependency-type: "direct"
+      - dependency-type: "indirect"
+    ignore:
+      # Ignore major version updates for critical deps until manually reviewed
+      - dependency-name: "wrangler"
+        update-type: "version-update:semver-major"
+      - dependency-name: "hono"
+        update-type: "version-update:semver-major"
+      - dependency-name: "jose"
+        update-type: "version-update:semver-major"
+      - dependency-name: "typescript"
+        update-type: "version-update:semver-major"
+      - dependency-name: "@cloudflare/workers-types"
+        update-type: "version-update:semver-major"
+
+  # freellm app
+  - package-ecosystem: "npm"
+    directory: "/apps/freellm"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:30"
+      timezone: "UTC"
+    labels:
+      - "dependencies"
+      - "npm"
+      - "freellm"
+    commit-message:
+      prefix: "deps(freellm)"
+      include: "scope"
+    reviewers:
+      - "hasitpbhatt"
+    assignees:
+      - "hasitpbhatt"
+    open-pull-requests-limit: 5
+    ignore:
+      - dependency-name: "vite"
+        update-type: "version-update:semver-major"
+      - dependency-name: "typescript"
+        update-type: "version-update:semver-major"
+
+  # games app
+  - package-ecosystem: "npm"
+    directory: "/apps/games"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "10:00"
+      timezone: "UTC"
+    labels:
+      - "dependencies"
+      - "npm"
+      - "games"
+    commit-message:
+      prefix: "deps(games)"
+      include: "scope"
+    reviewers:
+      - "hasitpbhatt"
+    assignees:
+      - "hasitpbhatt"
+    open-pull-requests-limit: 5
+    ignore:
+      - dependency-name: "vite"
+        update-type: "version-update:semver-major"
+      - dependency-name: "typescript"
+        update-type: "version-update:semver-major"
+
+  # fitness app (Next.js)
+  - package-ecosystem: "npm"
+    directory: "/apps/fitness"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "10:30"
+      timezone: "UTC"
+    labels:
+      - "dependencies"
+      - "npm"
+      - "fitness"
+    commit-message:
+      prefix: "deps(fitness)"
+      include: "scope"
+    reviewers:
+      - "hasitpbhatt"
+    assignees:
+      - "hasitpbhatt"
+    open-pull-requests-limit: 5
+    ignore:
+      - dependency-name: "next"
+        update-type: "version-update:semver-major"
+      - dependency-name: "react"
+        update-type: "version-update:semver-major"
+      - dependency-name: "react-dom"
+        update-type: "version-update:semver-major"
+      - dependency-name: "typescript"
+        update-type: "version-update:semver-major"
+
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "11:00"
+      timezone: "UTC"
+    labels:
+      - "dependencies"
+      - "github-actions"
+    commit-message:
+      prefix: "deps(actions)"
+      include: "scope"
+    reviewers:
+      - "hasitpbhatt"
+    assignees:
+      - "hasitpbhatt"
+    open-pull-requests-limit: 5
+
+# Security updates (separate from version updates)
+# These run more frequently for vulnerable dependencies
+# GitHub handles this automatically via Dependabot alerts
