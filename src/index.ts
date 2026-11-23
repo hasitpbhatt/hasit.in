@@ -10,7 +10,7 @@ import { blogApp } from './apps/blog';
 import { quizApp } from './apps/quiz';
 import { gamesApp } from './apps/games';
 import { authRoutes } from './lib/auth/routes';
-import { getSpaAssetPath, isLocalHostname, resolveAppKey, type AppKey } from './lib/host-routing';
+import { isLocalHostname, resolveAppKey, resolveSpaAssetPaths, type AppKey } from './lib/host-routing';
 
 type AppEnv = { Bindings: Env };
 
@@ -30,10 +30,26 @@ const APP_ROUTES: Record<string, Hono<AppEnv>> = {
 
 const AUTH_PREFIX = '/auth';
 
+function isPrivatePath(pathname: string): boolean {
+  return pathname === '/apps'
+    || pathname.startsWith('/apps/')
+    || pathname === '/_spa'
+    || pathname.startsWith('/_spa/');
+}
+
+function isApiPath(pathname: string): boolean {
+  return pathname === '/health'
+    || ['/api', '/v1', '/auth'].some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
+}
+
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
     const hostname = url.hostname.toLowerCase();
+
+    if (isPrivatePath(url.pathname)) {
+      return new Response(null, { status: 404 });
+    }
 
     // Miniflare rewrites the request URL to the first custom_domain route when
     // running locally, so localhost needs an explicit app selector. In
@@ -62,44 +78,23 @@ export default {
     const appKey =
       devApp !== null && devApp in APP_ROUTES ? devApp : resolveAppKey(hostname, local);
 
-    const spaAssetPath = getSpaAssetPath(appKey);
-
-        // Handle SPA routes for subdomain apps - serve index.html at clean URLs
-        // without exposing internal /apps/ prefix
-        if (spaAssetPath) {
-          const spaRoutes: Record<string, string[]> = {
-            freellm: ['/chat', '/dashboard', '/earn', '/models', '/providers', '/developers', '/usage', '/keys', '/admin', '/login', '/register', '/verify-email'],
-            fitness: ['/food', '/workouts', '/today', '/progress', '/quiz', '/login'],
-            finance: ['/stocks', '/portfolio', '/watchlist'],
-            quiz: ['/play', '/leaderboard', '/history'],
-            games: ['/play', '/leaderboard', '/history'],
-          };
-          const routes = spaRoutes[appKey] ?? [];
-          const isSpaRoute = url.pathname === '/' || routes.some((r) => url.pathname === r || url.pathname.startsWith(r + '/'));
-          
-          if (isSpaRoute) {
-            // Request the SPA root path from Assets binding
-            const assetUrl = new URL(request.url);
-            assetUrl.pathname = spaAssetPath;
-            const spaResponse = await env.ASSETS.fetch(new Request(assetUrl, request));
-            if (spaResponse.status !== 404) {
-              const responseHeaders = new Headers(spaResponse.headers);
-              responseHeaders.set('X-Hasit-App', appKey);
-              return new Response(spaResponse.body, {
-                status: spaResponse.status,
-                statusText: spaResponse.statusText,
-                headers: responseHeaders,
-              });
-            }
-          }
+    const isPageRequest = request.method === 'GET' || request.method === 'HEAD';
+    if (isPageRequest && !isApiPath(url.pathname)) {
+      for (const assetPath of resolveSpaAssetPaths(appKey, url.pathname)) {
+        const assetUrl = new URL(request.url);
+        assetUrl.pathname = assetPath;
+        const spaResponse = await env.ASSETS.fetch(new Request(assetUrl, request));
+        if (spaResponse.status !== 404) {
+          const responseHeaders = new Headers(spaResponse.headers);
+          responseHeaders.set('X-Hasit-App', appKey);
+          return new Response(spaResponse.body, {
+            status: spaResponse.status,
+            statusText: spaResponse.statusText,
+            headers: responseHeaders,
+          });
         }
-
-        // Handle SPA deep links for prefixed paths (e.g., /apps/freellm/chat) - redirect to clean URL
-        if (spaAssetPath && url.pathname.startsWith(spaAssetPath) && url.pathname !== spaAssetPath) {
-          const cleanUrl = new URL(request.url);
-          cleanUrl.pathname = url.pathname.replace(spaAssetPath, '/');
-          return Response.redirect(cleanUrl, 302);
-        }
+      }
+    }
 
     const app = APP_ROUTES[appKey] ?? APP_ROUTES[''];
 

@@ -23,8 +23,9 @@ test('finance API routes include preflight and Worker-hosted stock page assets',
   const stockPage = await financeApp.request('/s/AAPL', {}, env);
   assert.equal(stockPage.status, 200);
   const html = await stockPage.text();
-  assert.match(html, /href="\/apps\/finance\/styles\.css"/);
-  assert.match(html, /src="\/apps\/finance\/app\.js"/);
+  assert.match(html, /href="\/styles\.css"/);
+  assert.match(html, /src="\/app\.js"/);
+  assert.doesNotMatch(html, /\/apps\//);
 
   const apiStockPage = await financeApp.request('/api/s/AAPL', {}, env);
   assert.equal(apiStockPage.status, 200);

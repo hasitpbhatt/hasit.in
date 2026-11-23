@@ -1,13 +1,2 @@
-/apps/freellm/login /apps/freellm/index.html 200
-/apps/freellm/register /apps/freellm/index.html 200
-/apps/freellm/dashboard /apps/freellm/index.html 200
-/apps/freellm/chat /apps/freellm/index.html 200
-/apps/freellm/earn /apps/freellm/index.html 200
-/apps/freellm/models /apps/freellm/index.html 200
-/apps/freellm/providers /apps/freellm/index.html 200
-/apps/freellm/developers /apps/freellm/index.html 200
-/apps/freellm/usage /apps/freellm/index.html 200
-/apps/freellm/keys /apps/freellm/index.html 200
-/apps/freellm/admin /apps/freellm/index.html 200
-/apps/freellm/verify-email /apps/freellm/index.html 200
-/apps/freellm/r/ /apps/freellm/index.html 200
+# Intentionally empty: app routes are clean subdomain paths, and internal
+# build output is never exposed as a public URL.

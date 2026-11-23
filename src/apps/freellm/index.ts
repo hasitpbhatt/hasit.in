@@ -16,7 +16,7 @@ freellmApp.use('*', cors({
 function freellmBindings(env: Env): Bindings {
   return {
     ...env,
-    APP_BASE_PATH: '/apps/freellm',
+    APP_BASE_PATH: '',
     freellm_sessions: new D1FreellmStateStore(env.DB),
   };
 }

@@ -21,11 +21,11 @@ export async function GET(request) {
     <meta property="og:title" content="${raw} — Investable" />
     <meta property="og:description" content="Free investment research for ${raw}. Analyst ratings, insider trades, options, fundamentals, and AI summary." />
     <meta property="og:type" content="website" />
-    <link rel="stylesheet" href="/apps/finance/styles.css" />
+    <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
     <header class="site-header">
-      <a href="/apps/finance/" class="brand">
+      <a href="/" class="brand">
         <span class="brand-glyph">IN</span>
         Investable
       </a>
@@ -56,7 +56,7 @@ export async function GET(request) {
       <p>Data: Yahoo Finance, SEC EDGAR, CoinGecko, StockTwits (free, no key). For educational use only — not investment advice.</p>
     </footer>
 
-    <script src="/apps/finance/app.js"></script>
+    <script src="/app.js"></script>
   </body>
 </html>`;
 

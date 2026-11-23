@@ -157,6 +157,24 @@ await check('GET /health on auth.hasit.in -> auth service', async () => {
   assert(body.service === 'auth', `service ${body && body.service}`);
 });
 
+// SPA deep links must resolve at clean subdomain URLs, including dynamic
+// client-side routes. Otherwise the app shell loads but React renders nothing.
+for (const path of ['/', '/chat', '/r/test123']) {
+  await check(`GET ${path} on freellm.hasit.in serves the SPA`, async () => {
+    const { response, text } = await request(path, 'freellm.hasit.in');
+    assert(response.status === 200, `status ${response.status}`);
+    assert(text.includes('<div id="root"></div>'), 'SPA root element missing');
+    assert(response.headers.get('x-hasit-app') === 'freellm', 'wrong app header');
+  });
+}
+
+for (const path of ['/apps', '/apps/freellm/chat', '/_spa/freellm/index.html']) {
+  await check(`GET ${path} is not publicly exposed`, async () => {
+    const { response } = await request(path, 'freellm.hasit.in');
+    assert(response.status === 404, `status ${response.status}`);
+  });
+}
+
 // --- static assets are served by Cloudflare, not the Worker ---
 await check('GET /styles-trx.css is served', async () => {
   const { response, text } = await request('/styles-trx.css', 'trx.hasit.in');
