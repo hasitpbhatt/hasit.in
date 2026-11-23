@@ -446,8 +446,8 @@ export type { MetricCardProps, FilterChip, FilterChipBarProps, ColumnDef, Virtua
 
 /** Google AdSense Ad Slot component. Use responsively. */
 interface AdSlotProps {
-  /** AdSense slot ID from your AdSense account */
-  slot: string
+  /** AdSense slot ID from your AdSense account. Omit for auto-ads mode. */
+  slot?: string
   /** Ad format: 'auto' for responsive, or specific dimensions like '728x90' */
   format?: 'auto' | 'horizontal' | 'vertical' | 'rectangle' | 'square'
   /** Custom CSS class */
@@ -525,7 +525,7 @@ export function AdSlot({ slot, format = 'auto', className = '', style }: AdSlotP
       className={`adsbygoogle-slot ${className}`}
       style={getAdStyle()}
       data-ad-client={AD_CLIENT}
-      data-ad-slot={slot}
+      {...(slot ? { 'data-ad-slot': slot } : {})}
       data-ad-format={format === 'auto' ? 'auto' : undefined}
       data-full-width-responsive="true"
     >
@@ -533,7 +533,7 @@ export function AdSlot({ slot, format = 'auto', className = '', style }: AdSlotP
         className="adsbygoogle"
         style={getAdStyle()}
         data-ad-client={AD_CLIENT}
-        data-ad-slot={slot}
+        {...(slot ? { 'data-ad-slot': slot } : {})}
         data-ad-format={format === 'auto' ? 'auto' : undefined}
         data-full-width-responsive="true"
       />

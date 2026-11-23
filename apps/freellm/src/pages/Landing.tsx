@@ -38,10 +38,10 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Ad slot - Hero banner */}
+      {/* Ad slot - Hero banner (auto-ads mode) */}
             <section className="border-t border-line bg-surface/30 py-4" aria-label="Advertisement">
               <div className="mx-auto max-w-4xl px-4">
-                <AdSlot slot="YOUR_HERO_AD_SLOT_ID" format="horizontal" className="mx-auto" />
+                      <AdSlot format="horizontal" className="mx-auto" />
               </div>
             </section>
 
@@ -180,10 +180,10 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Ad slot - Mid content */}
+      {/* Ad slot - Mid content (auto-ads mode) */}
             <section className="border-t border-line bg-surface/30 py-4" aria-label="Advertisement">
               <div className="mx-auto max-w-4xl px-4">
-                <AdSlot slot="YOUR_MID_CONTENT_AD_SLOT_ID" format="rectangle" className="mx-auto" />
+                      <AdSlot format="rectangle" className="mx-auto" />
               </div>
             </section>
 

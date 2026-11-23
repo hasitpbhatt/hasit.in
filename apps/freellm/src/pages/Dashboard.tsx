@@ -161,9 +161,9 @@ export default function Dashboard() {
         </Card>
       </div>
 
-      {/* Ad slot - Top of dashboard */}
+      {/* Ad slot - Top of dashboard (auto-ads mode) */}
             <div className="py-4" aria-label="Advertisement">
-              <AdSlot slot="YOUR_DASHBOARD_TOP_AD_SLOT_ID" format="horizontal" className="mx-auto max-w-4xl" />
+                    <AdSlot format="horizontal" className="mx-auto max-w-4xl" />
             </div>
 
             {/* First-run checklist — teaches the model through action */}
@@ -188,9 +188,9 @@ export default function Dashboard() {
         </div>
       </Card>
 
-            {/* Ad slot - Before recent activity */}
+            {/* Ad slot - Before recent activity (auto-ads mode) */}
             <div className="py-4" aria-label="Advertisement">
-              <AdSlot slot="YOUR_DASHBOARD_MID_AD_SLOT_ID" format="rectangle" className="mx-auto max-w-4xl" />
+                          <AdSlot format="rectangle" className="mx-auto max-w-4xl" />
             </div>
 
       {/* Recent activity */}

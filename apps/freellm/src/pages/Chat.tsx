@@ -579,9 +579,9 @@ export default function Chat() {
                 </div>
               </div>
 
-        {/* Ad slot in header on mobile */}
+        {/* Ad slot in header on mobile (auto-ads mode) */}
         <div className="w-full lg:hidden" aria-label="Advertisement">
-          <AdSlot slot="YOUR_CHAT_MOBILE_AD_SLOT_ID" format="horizontal" className="mx-auto" />
+                  <AdSlot format="horizontal" className="mx-auto" />
         </div>
 
         <div className="flex items-center gap-3 lg:ml-auto">
@@ -773,9 +773,9 @@ export default function Chat() {
             </button>
           )}
 
-                    {/* Ad slot between messages and composer - desktop */}
+                    {/* Ad slot between messages and composer - desktop (auto-ads mode) */}
                     <div className="hidden lg:block px-4 py-2" aria-label="Advertisement">
-                      <AdSlot slot="YOUR_CHAT_DESKTOP_AD_SLOT_ID" format="horizontal" className="mx-auto max-w-2xl" />
+                                          <AdSlot format="horizontal" className="mx-auto max-w-2xl" />
                     </div>
         </div>
 

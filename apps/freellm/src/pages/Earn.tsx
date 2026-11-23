@@ -460,9 +460,9 @@ export default function Earn() {
         />
       )}
 
-            {/* Ad slot - After TodayCard */}
+            {/* Ad slot - After TodayCard (auto-ads mode) */}
             <div className="py-4" aria-label="Advertisement">
-              <AdSlot slot="YOUR_EARN_HERO_AD_SLOT_ID" format="horizontal" className="mx-auto max-w-4xl" />
+                          <AdSlot format="horizontal" className="mx-auto max-w-4xl" />
             </div>
 
       {/* Inline promo redemption — shows when balance is low */}
@@ -651,9 +651,9 @@ export default function Earn() {
         </EarnTile>
       </div>
 
-              {/* Ad slot - Mid page */}
+              {/* Ad slot - Mid page (auto-ads mode) */}
               <div className="py-4" aria-label="Advertisement">
-                <AdSlot slot="YOUR_EARN_MID_AD_SLOT_ID" format="rectangle" className="mx-auto max-w-4xl" />
+                              <AdSlot format="rectangle" className="mx-auto max-w-4xl" />
               </div>
 
       {/* COLLAPSED FOOTER */}
