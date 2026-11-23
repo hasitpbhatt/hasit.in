@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { getSpaAssetPath, resolveAppKey, isLocalHostname } from '../src/lib/host-routing.ts';
+import { getSpaAssetRoot, resolveAppKey, resolveSpaAssetPaths, isLocalHostname } from '../src/lib/host-routing.ts';
 
 test('root domain serves the portfolio', () => {
   assert.equal(resolveAppKey('hasit.in'), '');
@@ -45,15 +45,23 @@ test('isLocalHostname recognises loopback only', () => {
   assert.equal(isLocalHostname('trx.hasit.in'), false);
 });
 
-test('planned SPA hosts map to their static asset directories', () => {
+test('SPA hosts use private asset roots and resolve clean browser paths', () => {
   for (const [hostname, app] of [
     ['freellm.hasit.in', 'freellm'],
     ['fitness.hasit.in', 'fitness'],
     ['finance.hasit.in', 'finance'],
     ['quiz.hasit.in', 'quiz'],
     ['games.hasit.in', 'games'],
-  ]) {
-    const expected = app === 'fitness' ? '/apps/fitness/gu/' : `/apps/${app}/`;
-    assert.equal(getSpaAssetPath(resolveAppKey(hostname)), expected);
+  ] as const) {
+    assert.equal(resolveAppKey(hostname), app);
+    const root = getSpaAssetRoot(app);
+    assert.ok(root);
+    assert.ok(root.startsWith('/_spa/'));
+    assert.ok(!root.includes('/apps/'));
   }
+
+  assert.deepEqual(resolveSpaAssetPaths('freellm', '/chat'), ['/_spa/freellm/index.html']);
+  assert.deepEqual(resolveSpaAssetPaths('freellm', '/r/test123'), ['/_spa/freellm/index.html']);
+  assert.deepEqual(resolveSpaAssetPaths('freellm', '/assets/index-abc.js'), ['/_spa/freellm/assets/index-abc.js']);
+  assert.deepEqual(resolveSpaAssetPaths('fitness', '/gu/workouts/'), ['/_spa/fitness/gu/workouts/index.html']);
 });

@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 
 import { spawnSync } from 'node:child_process';
-import { access, cp, mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
+import { access, cp, mkdir, rm } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const appsRoot = path.join(root, 'apps');
-const outputRoot = path.join(root, 'public', 'apps');
+const outputRoot = path.join(root, 'public', '_spa');
 
 function runNpm(cwd, args) {
   const command = process.platform === 'win32' ? 'npm.cmd' : 'npm';
@@ -60,7 +60,7 @@ async function buildGames() {
     'vite',
     'build',
     '--base',
-    '/apps/games/',
+    '/',
     '--outDir',
     path.relative(appRoot, output),
     '--emptyOutDir',
@@ -78,7 +78,7 @@ async function buildFreeLlm() {
     'vite',
     'build',
     '--base',
-    '/apps/freellm/',
+    '/',
     '--outDir',
     path.relative(appRoot, output),
     '--emptyOutDir',
@@ -97,33 +97,6 @@ async function copyFinance() {
   const source = path.join(appsRoot, 'finance', 'public');
   const output = await resetOutput('finance');
   await cp(source, output, { recursive: true });
-  await rewriteFinanceAssets(output);
-}
-
-async function rewriteFinanceAssets(output) {
-  const files = await readdir(output, { recursive: true, withFileTypes: true });
-  for (const entry of files) {
-    if (!entry.isFile()) continue;
-    const filePath = path.join(entry.parentPath, entry.name);
-    if (entry.name.endsWith('.html')) {
-      const html = await readFile(filePath, 'utf8');
-      const rewritten = html.replace(
-        /(src|href)=(["'])\/(?!\/)([^"']*)\2/gi,
-        (match, attribute, quote, assetPath) => {
-          if (assetPath === 'api' || assetPath.startsWith('api/')) return match;
-          return `${attribute}=${quote}/apps/finance/${assetPath}${quote}`;
-        }
-      );
-      await writeFile(filePath, rewritten);
-    } else if (entry.name.endsWith('.css')) {
-      const css = await readFile(filePath, 'utf8');
-      const rewritten = css.replace(
-        /url\((\s*)(["']?)\/(?!\/|apps\/finance\/)([^)"']+)\2(\s*)\)/g,
-        'url($1$2/apps/finance/$3$2$4)'
-      );
-      await writeFile(filePath, rewritten);
-    }
-  }
 }
 
 async function copyQuiz() {

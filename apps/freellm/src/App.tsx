@@ -1,4 +1,5 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
+import { appBase } from './lib/app-path'
 import AppShell from './components/AppShell'
 import { ToastProvider } from './components/ui'
 import Landing from './pages/Landing'
@@ -18,7 +19,7 @@ import Providers from './pages/Providers'
 
 export default function App() {
   return (
-    <BrowserRouter basename={import.meta.env.BASE_URL.replace(/\/$/, '')}>
+    <BrowserRouter basename={appBase(import.meta.env.BASE_URL)}>
       <ToastProvider>
         <Routes>
           <Route element={<AppShell />}>

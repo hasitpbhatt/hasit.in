@@ -30,16 +30,60 @@ const SUBDOMAIN_APPS: Record<string, AppKey> = {
 };
 
 const ROOT_DOMAIN = 'hasit.in';
-const SPA_ASSET_PATHS: Partial<Record<AppKey, string>> = {
-  freellm: '/apps/freellm/',
-  fitness: '/apps/fitness/gu/',
-  finance: '/apps/finance/',
-  quiz: '/apps/quiz/',
-  games: '/apps/games/',
+
+// Build output is staged under a private prefix. Clean browser URLs are
+// rewritten to these paths by the Worker so /apps/... is never public.
+const SPA_ASSET_ROOTS: Partial<Record<AppKey, string>> = {
+  freellm: '/_spa/freellm/',
+  fitness: '/_spa/fitness/',
+  finance: '/_spa/finance/',
+  quiz: '/_spa/quiz/',
+  games: '/_spa/games/',
 };
 
-export function getSpaAssetPath(appKey: AppKey): string | null {
-  return SPA_ASSET_PATHS[appKey] ?? null;
+const FITNESS_LOCALES = ['gu', 'en', 'hi'] as const;
+
+export function getSpaAssetRoot(appKey: AppKey): string | null {
+  return SPA_ASSET_ROOTS[appKey] ?? null;
+}
+
+function normalizePath(pathname: string): string {
+  const clean = pathname.split('?')[0].replace(/\/+$/, '');
+  return clean.startsWith('/') ? clean : `/${clean}`;
+}
+
+function isStaticAssetPath(pathname: string): boolean {
+  return pathname.startsWith('/_next/')
+    || pathname.startsWith('/assets/')
+    || /\.[a-z0-9]+$/i.test(pathname);
+}
+
+/** Internal asset paths to try for a clean browser URL, in priority order. */
+export function resolveSpaAssetPaths(appKey: AppKey, pathname: string): string[] {
+  const root = getSpaAssetRoot(appKey);
+  if (!root) return [];
+
+  const path = normalizePath(pathname);
+  if (isStaticAssetPath(path)) return [`${root}${path.slice(1)}`];
+
+  if (appKey === 'fitness') {
+    if (path === '/') {
+      return FITNESS_LOCALES.map((locale) => `${root}${locale}/index.html`);
+    }
+
+    const segments = path.slice(1).split('/').filter(Boolean);
+    if (FITNESS_LOCALES.includes(segments[0] as (typeof FITNESS_LOCALES)[number])) {
+      const rest = segments.slice(1).join('/');
+      return [rest ? `${root}${segments[0]}/${rest}/index.html` : `${root}${segments[0]}/index.html`];
+    }
+
+    return FITNESS_LOCALES.flatMap((locale) => [
+      `${root}${locale}${path}/index.html`,
+      `${root}${locale}${path}.html`,
+    ]);
+  }
+
+  return [`${root}index.html`];
 }
 
 /** True for localhost / loopback hostnames. */

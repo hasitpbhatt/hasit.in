@@ -12,7 +12,7 @@ dist/
 .next/
 out/
 *.tsbuildinfo
-public/apps/
+public/_spa/
 
 # Local secrets
 .dev.vars
@@ -37,3 +37,8 @@ coverage/
 
 # Misc
 *.local
+
+# Build output
+build-output.txt
+smoke-output.txt
+test-output.txt

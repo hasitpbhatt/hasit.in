@@ -5,12 +5,16 @@ import { D1FreellmStateStore } from '../src/apps/freellm/state-store.ts';
 import { appPath } from '../apps/freellm/functions/lib/app-path.ts';
 import { appPath as browserAppPath } from '../apps/freellm/src/lib/app-path.ts';
 
-test('FreeLLM UI paths are rooted under the staged asset directory', () => {
-  assert.equal(appPath('/login', '/apps/freellm'), '/apps/freellm/login');
-  assert.equal(appPath('/apps/freellm/keys', '/apps/freellm'), '/apps/freellm/keys');
+test('Worker paths use clean browser URLs', () => {
+  assert.equal(appPath('/login', ''), '/login');
+  assert.equal(appPath('/keys', ''), '/keys');
   assert.equal(appPath('/login'), '/login');
-  assert.equal(browserAppPath('/login?next=/admin', '/apps/freellm/'), '/apps/freellm/login?next=/admin');
+});
+
+test('FreeLLM browser paths stay clean on subdomain hosting', () => {
+  assert.equal(browserAppPath('/login?next=/admin', '/'), '/login?next=/admin');
   assert.equal(browserAppPath('/chat', '/'), '/chat');
+  assert.equal(browserAppPath('/keys', '/custom-base/'), '/custom-base/keys');
 });
 
 test('D1 state store preserves text and JSON values and expires entries', async () => {
