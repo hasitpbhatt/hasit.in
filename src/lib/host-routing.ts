@@ -93,11 +93,27 @@ export function isLocalHostname(hostname: string): boolean {
 }
 
 /**
+ * Checks if a hostname is a known subdomain of hasit.in
+ * that should be routed to a specific app.
+ */
+export function isKnownSubdomain(hostname: string): boolean {
+  const h = hostname.toLowerCase().replace(/:\d+$/, '');
+  if (h.endsWith(`.${ROOT_DOMAIN}`)) {
+    const sub = h.slice(0, -1 * (`.${ROOT_DOMAIN}`.length));
+    return sub in SUBDOMAIN_APPS;
+  }
+  return false;
+}
+
+/**
  * Resolve a hostname to an app key.
  *
  * In production only real subdomains resolve; unknown hosts fall back to the
  * portfolio. On localhost we default to the TRX faucet so a single origin can
  * exercise the whole surface (plan.md Phase 4 endpoint table).
+ *
+ * However, if the Host header indicates a known subdomain (e.g., quiz.hasit.in),
+ * we route to that app regardless of local vs production.
  */
 export function resolveAppKey(hostname: string, local = isLocalHostname(hostname)): AppKey {
   const h = hostname.toLowerCase().replace(/:\d+$/, '');
@@ -107,6 +123,14 @@ export function resolveAppKey(hostname: string, local = isLocalHostname(hostname
   if (h.endsWith(`.${ROOT_DOMAIN}`)) {
     const sub = h.slice(0, -1 * (`.${ROOT_DOMAIN}`.length));
     return SUBDOMAIN_APPS[sub] ?? '';
+  }
+
+  // For local development with explicit Host header pointing to a known subdomain,
+  // route to that subdomain instead of defaulting to TRX
+  if (local && isKnownSubdomain(hostname)) {
+    const h2 = hostname.toLowerCase().replace(/:\d+$/, '');
+    const sub = h2.slice(0, -1 * (`.${ROOT_DOMAIN}`.length));
+    return SUBDOMAIN_APPS[sub] ?? 'trx';
   }
 
   if (local) return 'trx';

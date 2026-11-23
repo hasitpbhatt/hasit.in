@@ -1,0 +1,31 @@
+# Robots.txt for hasit.in
+# Allows all crawlers to access all subdomains
+
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://hasit.in/sitemap.xml
+Sitemap: https://www.hasit.in/sitemap.xml
+Sitemap: https://trx.hasit.in/sitemap.xml
+Sitemap: https://trx2.hasit.in/sitemap.xml
+Sitemap: https://freellm.hasit.in/sitemap.xml
+Sitemap: https://fitness.hasit.in/sitemap.xml
+Sitemap: https://finance.hasit.in/sitemap.xml
+Sitemap: https://quiz.hasit.in/sitemap.xml
+Sitemap: https://games.hasit.in/sitemap.xml
+Sitemap: https://auth.hasit.in/sitemap.xml
+
+# Disallow private paths
+Disallow: /_spa/
+Disallow: /_spa/*
+Disallow: /apps/
+Disallow: /apps/*
+Disallow: /api/
+Disallow: /api/*
+Disallow: /v1/
+Disallow: /v1/*
+Disallow: /auth/
+Disallow: /auth/*
+Disallow: /admin/
+Disallow: /admin/*
