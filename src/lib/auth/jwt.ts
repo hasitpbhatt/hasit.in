@@ -31,10 +31,50 @@ async function getPrivateKey(env: Env): Promise<CryptoKey> {
   return privateKey;
 }
 
+/** Decode a PKCS#8 PEM body into DER bytes for WebCrypto. */
+function privateKeyDer(pem: string) {
+  const body = pem
+    .replace(/-----BEGIN [^-]+-----/g, '')
+    .replace(/-----END [^-]+-----/g, '')
+    .replace(/\s+/g, '');
+  const binary = atob(body);
+  const der = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i += 1) {
+    der[i] = binary.charCodeAt(i);
+  }
+  return der;
+}
+
+/**
+ * Some deployments only receive JWT_PRIVATE_KEY. Derive the matching EC
+ * verification key from it so issued tokens remain verifiable.
+ */
+async function derivePublicKey(env: Env): Promise<CryptoKey> {
+  const signingKey = await crypto.subtle.importKey(
+    'pkcs8',
+    privateKeyDer(normalizePem(env.JWT_PRIVATE_KEY, 'PRIVATE')),
+    { name: 'ECDSA', namedCurve: 'P-256' },
+    true,
+    ['sign']
+  );
+  const jwk = (await crypto.subtle.exportKey('jwk', signingKey)) as JsonWebKey;
+  delete jwk.d;
+  jwk.key_ops = ['verify'];
+  jwk.ext = true;
+  return crypto.subtle.importKey(
+    'jwk',
+    jwk,
+    { name: 'ECDSA', namedCurve: 'P-256' },
+    true,
+    ['verify']
+  );
+}
+
 async function getPublicKey(env: Env): Promise<CryptoKey> {
   if (!publicKey) {
-    const imported = await importSPKI(normalizePem(env.JWT_PUBLIC_KEY, 'PUBLIC'), 'ES256');
-    publicKey = imported as unknown as CryptoKey;
+    publicKey = env.JWT_PUBLIC_KEY
+      ? (await importSPKI(normalizePem(env.JWT_PUBLIC_KEY, 'PUBLIC'), 'ES256')) as unknown as CryptoKey
+      : await derivePublicKey(env);
   }
   return publicKey;
 }

@@ -18,6 +18,11 @@ interface ClaimSessionData {
   csrf: string;
 }
 
+export interface ClaimSession {
+  token: string;
+  csrf: string;
+}
+
 /**
  * A claim session is minted when the claim page is rendered and carries the
  * CSRF token that the POST must echo back.
@@ -25,10 +30,10 @@ interface ClaimSessionData {
  * Note: the memory game is client side by design and proves nothing to the
  * server. The bot gates are Turnstile, the rate limit and the claim limits.
  */
-export async function createClaimSession(env: Env, address: string): Promise<string> {
+export async function createClaimSession(env: Env, address: string): Promise<ClaimSession> {
   const csrf = crypto.randomUUID();
 
-  return signJWT(
+  const token = await signJWT(
     {
       sub: 'claim_session',
       email: '',
@@ -42,6 +47,8 @@ export async function createClaimSession(env: Env, address: string): Promise<str
     env,
     '30m'
   );
+
+  return { token, csrf };
 }
 
 export async function readClaimSession(

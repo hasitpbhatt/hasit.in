@@ -94,10 +94,10 @@ claimRoutes.get('/', async (c) => {
 
   let sessionToken = '';
   let csrf = '';
-  if (page === 'eligible' && address) {
-    sessionToken = await createClaimSession(c.env, address);
-    const session = await readClaimSession(c.env, sessionToken);
-    csrf = session?.csrf ?? '';
+  if (page === 'eligible') {
+    const session = await createClaimSession(c.env, address);
+    sessionToken = session.token;
+    csrf = session.csrf;
   }
 
   const streakRow = address ? await trx.streaks.get(c.env.DB, address) : null;
@@ -120,6 +120,7 @@ claimRoutes.get('/', async (c) => {
     refUsers: settingsMap.get('ref_users') || '0',
     sessionToken,
     csrf,
+    trxHost: resolveTrxHost(c.req.raw),
     enabled,
     disallowEmail,
     streak: streak.streak,
@@ -164,7 +165,9 @@ claimRoutes.post(
     const ip = getClientIP(c.req.raw);
 
     const session = await readClaimSession(c.env, sessionToken);
-    if (!session || session.address !== address) {
+    // A plain GET mints an unbound session before the user pastes an address;
+    // only reject sessions bound to a *different* non-empty address.
+    if (!session || (session.address && session.address !== address)) {
       return c.json({ error: 'Invalid session' }, 400);
     }
 
@@ -260,6 +263,15 @@ claimRoutes.post(
 );
 
 // Helper functions
+const TRX_HOST_ALLOWLIST = new Set(['trx.hasit.in', 'trx2.hasit.in']);
+
+/** Resolve the public faucet host from the request, rejecting unknown hosts. */
+function resolveTrxHost(request: Request): string {
+  const raw = request.headers.get('Host') || request.headers.get('X-Hasit-Host') || '';
+  const hostname = raw.split(':')[0].trim().toLowerCase();
+  return TRX_HOST_ALLOWLIST.has(hostname) ? hostname : 'trx.hasit.in';
+}
+
 async function checkTimeLeft(
   db: D1Database,
   kind: 'ip' | 'address',

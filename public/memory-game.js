@@ -15,9 +15,14 @@
   var statusEl = document.getElementById('game_status');
   var submitBtn = document.getElementById('claimbtn');
   var addressInput = document.querySelector('input[name="address"]');
-  var turnstileResponse = document.querySelector('input[name="cf-turnstile-response"]');
 
   if (!cardsEl || !submitBtn) return;
+
+  // Turnstile injects this input asynchronously and may replace it on retry,
+  // so always look it up fresh instead of caching a possibly-null element.
+  function getTurnstileResponse() {
+    return document.querySelector('input[name="cf-turnstile-response"]');
+  }
 
   var state = {
     flipped: [],
@@ -135,8 +140,9 @@
   }
 
   function checkReadyToClaim() {
+    var turnstileResponse = getTurnstileResponse();
     var hasAddress = addressInput && addressInput.value.trim().length > 0;
-    var hasTurnstile = turnstileResponse && turnstileResponse.value.length > 0;
+    var hasTurnstile = !!(turnstileResponse && turnstileResponse.value.length > 0);
 
     if (state.done && hasAddress && hasTurnstile) {
       submitBtn.disabled = false;
@@ -154,17 +160,17 @@
     });
   }
 
-  // Listen for turnstile completion (polling since no direct event)
-  var turnstileCheck = setInterval(function () {
-    if (turnstileResponse && turnstileResponse.value.length > 0) {
-      clearInterval(turnstileCheck);
-      if (state.done) checkReadyToClaim();
-    }
-  }, 500);
+  // Poll continuously: the input appears late, can be replaced, and its
+  // token expires. Never stop checking, or an expired token stays enabled.
+  setInterval(checkReadyToClaim, 500);
 
   // Initialize
   render();
 
+  // Turnstile callback hooks (see the .cf-turnstile element in templates.ts)
+  window.trxTurnstileSolved = checkReadyToClaim;
+  window.trxTurnstileExpired = checkReadyToClaim;
+
   // Expose for testing
-  window.trxMemoryGame = { render: render, state: state };
+  window.trxMemoryGame = { render: render, state: state, checkReadyToClaim: checkReadyToClaim };
 })();

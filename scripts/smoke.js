@@ -87,6 +87,15 @@ await check('GET / serves the faucet', async () => {
   assert(text.includes('TRX'), 'no faucet markup in body');
 });
 
+await check('plain GET / issues a session and CSRF token', async () => {
+  const { response, text } = await request('/', 'localhost');
+  assert(response.status === 200, `status ${response.status}`);
+  const session = text.match(/name="session" value="([^"]+)"/)?.[1];
+  const csrf = text.match(/name="csrf" value="([^"]+)"/)?.[1];
+  assert(session && session.length > 20, 'plain GET did not issue a session token');
+  assert(csrf && csrf.length > 10, 'plain GET did not issue a CSRF token');
+});
+
 await check('GET /admin/login serves the admin login', async () => {
   const { response, text } = await request('/admin/login', 'localhost');
   assert(response.status === 200, `status ${response.status}`);
@@ -214,6 +223,34 @@ await check('a full claim succeeds in local mock mode', async () => {
 
   const cookies = response.headers.getSetCookie();
   assert(cookies.length >= 2, `expected separate session and flash cookies, got ${cookies.length}`);
+});
+
+await check('a claim succeeds with a session from a plain GET', async () => {
+  // The user pastes an address into the form after the page loaded, so the
+  // session is minted with no bound address.
+  const address = randomAddress();
+  const page = await request('/', 'localhost');
+  assert(page.response.status === 200, `page status ${page.response.status}`);
+
+  const session = page.text.match(/name="session" value="([^"]+)"/)?.[1];
+  const csrf = page.text.match(/name="csrf" value="([^"]+)"/)?.[1];
+  assert(session && csrf, 'the plain GET page did not issue a session and CSRF token');
+
+  const body = new URLSearchParams({
+    address,
+    session,
+    csrf,
+    'cf-turnstile-response': 'local-test-token',
+    ref: '',
+  });
+  const { response, text } = await request('/', 'localhost', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: body.toString(),
+  });
+
+  assert(response.status === 302, `status ${response.status}: ${text.slice(0, 200)}`);
+  assert(response.headers.get('Location') === '/', 'claim did not redirect home');
 });
 
 await check('admin login authenticates and opens the dashboard', async () => {

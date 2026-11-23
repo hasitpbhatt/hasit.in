@@ -25,6 +25,7 @@ export interface ClaimPageData {
   refUsers: string;
   sessionToken: string;
   csrf: string;
+  trxHost: string;
   enabled: boolean;
   disallowEmail: boolean;
   streak: number;
@@ -143,7 +144,7 @@ function renderClaimForm(data: ClaimPageData): string {
         <input type="text" class="form-control" id="trxAddress" name="address" placeholder="Tron (TRX) address" value="${escapeHtml(data.address)}" required ${!data.enabled ? 'disabled' : ''}>
       </div>
       <div class="col form-group mb-2">
-        <div class="cf-turnstile" data-sitekey="${escapeHtml(data.turnstileSiteKey)}" data-theme="dark" data-action="claim"></div>
+        <div class="cf-turnstile" data-sitekey="${escapeHtml(data.turnstileSiteKey)}" data-theme="dark" data-action="claim" data-callback="trxTurnstileSolved" data-expired-callback="trxTurnstileExpired"></div>
       </div>
     </div>
   </div>
@@ -249,7 +250,7 @@ ${renderFooter(data)}
 <script src="/memory-game.js"></script>
 <script>
   window.trx = {
-    host: "trx.hasit.in",
+    host: "${escapeHtml(data.trxHost)}",
     sessionToken: "${escapeHtml(data.sessionToken)}",
     csrf: "${escapeHtml(data.csrf)}",
   };
