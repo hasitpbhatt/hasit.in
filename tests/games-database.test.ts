@@ -20,3 +20,21 @@ test('game table names are namespaced in every supported SQL clause', () => {
     'INSERT INTO games_score_events (user_id) VALUES (?1); UPDATE games_users SET balance = ?1; DELETE FROM games_sessions WHERE token = ?2'
   );
 });
+
+test('table names in JOIN and comma-separated FROM lists are namespaced', () => {
+  assert.equal(
+    prefixGamesSql('SELECT * FROM users, sessions WHERE users.id = sessions.user_id'),
+    'SELECT * FROM games_users, games_sessions WHERE games_users.id = games_sessions.user_id'
+  );
+});
+
+test('column names that merely contain a table name are not rewritten', () => {
+  assert.equal(
+    prefixGamesSql('SELECT user_id, session_token FROM users'),
+    'SELECT user_id, session_token FROM games_users'
+  );
+});
+
+test('standalone identifiers unrelated to game tables are untouched', () => {
+  assert.equal(prefixGamesSql('SELECT id, name FROM accounts'), 'SELECT id, name FROM accounts');
+});

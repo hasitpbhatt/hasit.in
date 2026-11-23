@@ -163,6 +163,18 @@ npm run dev       # Start wrangler dev server
 - No unused variables (warning)
 - Prefer explicit types over `any`
 
+## Agent Skills (pragmaplaybook)
+
+This repo should use the discipline from `hasitpbhatt/pragmaplaybook` for agent work. Before acting, load the relevant skill:
+
+- PR review: read `skills/pr-review/SKILL.md` first.
+- Debugging: read `skills/debug/SKILL.md` first.
+- TDD development: read `skills/tdd/SKILL.md` first.
+- System design: read `skills/system-design/SKILL.md` first.
+- Incident response: read `skills/incident-response/SKILL.md` first.
+
+Prefer `.github/github-app.yml` with an `instructions:` block so agents auto-load these skills. Skills are read-only guidance; nothing here executes code.
+
 ## Performance Notes
 
 - Static assets served free via Cloudflare Assets (no Worker invocation)
