@@ -141,15 +141,18 @@
 
   function checkReadyToClaim() {
     var turnstileResponse = getTurnstileResponse();
-    var hasAddress = addressInput && addressInput.value.trim().length > 0;
-    var hasTurnstile = !!(turnstileResponse && turnstileResponse.value.length > 0);
+    var hasAddress = !!(addressInput && addressInput.value.trim().length > 0);
+    var hasTurnstile = !!(turnstileResponse && turnstileResponse.value && turnstileResponse.value.length > 0);
 
     if (state.done && hasAddress && hasTurnstile) {
       submitBtn.disabled = false;
       submitBtn.classList.remove('d-none');
+      submitBtn.style.display = 'block';
       submitBtn.textContent = 'Claim your TRX!';
     } else {
       submitBtn.disabled = true;
+      submitBtn.classList.add('d-none');
+      submitBtn.style.display = 'none';
     }
   }
 

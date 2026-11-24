@@ -41,6 +41,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Wallet address input live validation (Optimized for INP)
     const addressInput = document.querySelector('input[name="address"]');
+    const referralLinkInput = document.getElementById('referral-link');
+    const copyReferralBtn = document.getElementById('copy-referral');
     if (addressInput) {
         let validationFrame = null;
         addressInput.addEventListener('input', function() {
@@ -55,6 +57,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     inputEl.style.borderColor = 'var(--success)';
                 } else {
                     inputEl.style.borderColor = 'var(--danger)';
+                }
+
+                // Keep the referral link in sync with the typed address.
+                if (referralLinkInput && tronRegex.test(val)) {
+                    const link = 'https://trx.hasit.in/?r=' + encodeURIComponent(val);
+                    referralLinkInput.value = link;
+                    if (copyReferralBtn) copyReferralBtn.setAttribute('data-copy', link);
                 }
             });
         });
