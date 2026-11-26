@@ -7,6 +7,7 @@ import {
   renderAnalyticsTags,
   type SiteConfig,
 } from '../../../lib/site-config';
+import { renderNoDataState } from '../../../lib/ui-components.ts';
 import { renderAuthorNav, renderQuoteOfDay } from '../../../lib/quotes.ts';
 import { renderCmcWidget, renderFaucetFooterLinks } from '../../../lib/cmc-widget.ts';
 
@@ -194,7 +195,9 @@ function renderReferralSection(data: ClaimPageData): string {
 }
 
 function renderRecentPayouts(payouts: PayoutRow[]): string {
-  if (!payouts.length) return '';
+  if (!payouts.length) {
+    return renderNoDataState('No recent payouts yet', 'Payouts appear here once claims start flowing.');
+  }
 
   return `<div id="recent-payouts">
     <h3>Recent Payouts</h3>

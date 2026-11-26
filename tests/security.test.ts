@@ -1,5 +1,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { Hono } from 'hono';
+
+import { securityHeadersMiddleware } from '../src/middleware/security-headers.ts';
+import type { Env } from '../src/env.ts';
 
 import {
   edgeBanReason,
@@ -22,6 +26,19 @@ const empty: SecuritySettings = {
   hostnameBanList: [],
   nastyhostsEnabled: false,
 };
+
+test('CSP permits the external origins required by Turnstile and Quiz', async () => {
+  const app = new Hono<{ Bindings: Env }>();
+  app.use('*', securityHeadersMiddleware());
+  app.get('/', (c) => c.text('ok'));
+
+  const response = await app.request('/');
+  const csp = response.headers.get('Content-Security-Policy') ?? '';
+
+  assert.match(csp, /script-src[^;]*https:\/\/challenges\.cloudflare\.com/);
+  assert.match(csp, /frame-src[^;]*https:\/\/challenges\.cloudflare\.com/);
+  assert.match(csp, /connect-src[^;]*https:\/\/raw\.githubusercontent\.com/);
+});
 
 test('a Cloudflare country ban is enforced case-insensitively', () => {
   assert.equal(edgeBanReason(settings, { country: 'CN', asn: 1 }), 'Country banned');

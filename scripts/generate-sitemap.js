@@ -1,13 +1,12 @@
 #!/usr/bin/env node
 
-import { writeFile, readdir, stat } from 'node:fs/promises';
+import { writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(__dirname, '..');
 const publicDir = path.join(root, 'public');
-const spaDir = path.join(publicDir, '_spa');
 
 const BASE_URL = 'https://hasit.in';
 
@@ -25,29 +24,8 @@ const SUBDOMAINS = [
   { subdomain: '', name: 'Portfolio', paths: ['/'] },
 ];
 
-/** Static files to include in sitemap */
-async function getStaticFiles(dir: string, basePath: string = ''): Promise<string[]> {
-  const files: string[] = [];
-  try {
-    const entries = await readdir(dir, { withFileTypes: true });
-    for (const entry of entries) {
-      const fullPath = path.join(dir, entry.name);
-      const relativePath = path.join(basePath, entry.name).replace(/\\/g, '/');
-      if (entry.isDirectory()) {
-        const subFiles = await getStaticFiles(fullPath, relativePath);
-        files.push(...subFiles);
-      } else if (entry.isFile() && (entry.name.endsWith('.html') || entry.name.endsWith('.js') || entry.name.endsWith('.css'))) {
-        files.push('/' + relativePath);
-      }
-    }
-  } catch {
-    // Directory doesn't exist
-  }
-  return files;
-}
-
-function generateSitemap(): string {
-  const urls: string[] = [];
+function generateSitemap() {
+  const urls = [];
 
   // Main domain
   urls.push(`${BASE_URL}/`);
@@ -55,10 +33,10 @@ function generateSitemap(): string {
   // Subdomains
   for (const sub of SUBDOMAINS) {
     const subdomainUrl = sub.subdomain ? `https://${sub.subdomain}.hasit.in` : BASE_URL;
-    
+
     // Add root of subdomain
     urls.push(`${subdomainUrl}/`);
-    
+
     // Add known paths for each subdomain
     if (sub.paths) {
       for (const p of sub.paths) {
