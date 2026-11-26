@@ -25,8 +25,7 @@ test('renderStatusBadge escapes unsafe label and keeps class normalized', () => 
   const out = renderStatusBadge('<img>', 'bad-tone', { className: '" onerror=x' });
   assert.match(out, /status-badge--neutral/);
   assert.match(out, new RegExp(LT + 'img' + GT));
-  // class<rfl:parameter name="<rfl:parameter name=" not injected
-  assert.ok(!out.includes('onerror=x"'));
+  assert.ok(!out.includes('" onerror=x'));
 });
 
 test('renderStatusBadge live polling attributes', () => {
@@ -55,7 +54,7 @@ test('renderNoDataState variants produce classes', () => {
 
 test('renderSearchEmptyState includes query', () => {
   const out = renderSearchEmptyState('term');
-  assert.match(out, /No results for "term"/);
+  assert.match(out, /No results for &quot;term&quot;/);
 });
 
 test('renderErrorState defaults', () => {
