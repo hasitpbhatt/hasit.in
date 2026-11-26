@@ -7,7 +7,7 @@ import {
   renderAnalyticsTags,
   type SiteConfig,
 } from '../../../lib/site-config';
-import { renderEmptyState, renderNoDataState } from '../../../lib/ui-components.ts';
+import { renderNoDataState } from '../../../lib/ui-components.ts';
 import { renderAuthorNav, renderQuoteOfDay } from '../../../lib/quotes.ts';
 import { renderCmcWidget, renderFaucetFooterLinks } from '../../../lib/cmc-widget.ts';
 
