@@ -44,15 +44,17 @@ export async function proxyFitness(request: Request, env: Env): Promise<Response
 
   const hasBody = request.method !== 'GET' && request.method !== 'HEAD';
 
-  const upstream = await fetch(
-    new Request(target.toString(), {
-      method: request.method,
-      headers: copyHeaders(request.headers, INTERNAL),
-      body: hasBody ? request.body : undefined,
-      // Upstream answers OAuth with 302s the browser must follow, not the Worker.
-      redirect: 'manual',
-    }),
-  );
+  const init: RequestInit & { duplex?: 'half' } = {
+    method: request.method,
+    headers: copyHeaders(request.headers, INTERNAL),
+    body: hasBody ? request.body : undefined,
+    // Upstream answers OAuth with 302s the browser must follow, not the Worker.
+    redirect: 'manual',
+  };
+  // Required by undici (Node's fetch) to stream a body; ignored by the Workers runtime.
+  if (hasBody) init.duplex = 'half';
+
+  const upstream = await fetch(new Request(target.toString(), init));
 
   // Body and framing are passed through untouched. The Workers runtime already
   // strips Content-Encoding/Content-Length when it decompresses a subrequest.
