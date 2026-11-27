@@ -51,4 +51,6 @@ export interface Env {
   TURNSTILE_SITE_KEY: string;
   GOOGLE_CLIENT_ID: string;
   GOOGLE_REDIRECT_URI?: string;
+  /** Upstream Pages deployment that actually serves fitness.hasit.in. */
+  FITNESS_ORIGIN?: string;
 }

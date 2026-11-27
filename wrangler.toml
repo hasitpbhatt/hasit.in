@@ -81,6 +81,11 @@ TURNSTILE_SITE_KEY = "0x4AAAAAAGLkTZr2vBCLFfZJ"
 GOOGLE_CLIENT_ID = "790517677532-hbolt3juspd1pqvenepc8708msss5hag.apps.googleusercontent.com"
 GOOGLE_REDIRECT_URI = "https://auth.hasit.in/callback"
 
+# fitness.hasit.in is reverse-proxied to its standalone Pages deployment.
+# The upstream owns its own CSP and Permissions-Policy, so the Worker's
+# security middleware steps aside for this hostname only.
+FITNESS_ORIGIN = "https://fitness-8lk.pages.dev"
+
 # Secrets (set via: wrangler secret put SECRET_NAME)
 # TURNSTILE_SECRET
 # FAUCETPAY_API_KEY

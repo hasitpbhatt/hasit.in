@@ -1,15 +1,25 @@
 import type { MiddlewareHandler } from 'hono';
 import type { Env } from '../env';
+import { resolveAppKey } from '../lib/host-routing.ts';
 
 type AppEnv = { Bindings: Env };
 
 /**
  * Security headers middleware
  * Adds CSP, HSTS, frame-ancestors, Permissions-Policy and other security headers
+ *
+ * Reverse-proxied apps are skipped: they publish their own, tighter header set
+ * (see hasitpbhatt/fitness public/_headers) and this layer would overwrite it.
+ * That upstream allows camera=(self), which the policy below blocks.
  */
 export function securityHeadersMiddleware(): MiddlewareHandler<AppEnv> {
   return async (c, next) => {
     await next();
+
+    const hostname = (c.req.header('Host') ?? new URL(c.req.url).hostname).toLowerCase();
+    if (resolveAppKey(hostname) === 'fitness') {
+      return;
+    }
 
     const headers = c.res.headers;
 

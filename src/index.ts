@@ -4,6 +4,7 @@ import type { Env } from './env';
 import { trxApp } from './apps/trx';
 import { portfolioApp } from './apps/portfolio';
 import { freellmApp } from './apps/freellm';
+import { fitnessApp } from './apps/fitness';
 import { blogApp } from './apps/blog';
 import { authRoutes } from './lib/auth/routes';
 import { isLocalHostname, resolveAppKey, resolveSpaAssetPaths, type AppKey } from './lib/host-routing';
@@ -16,6 +17,7 @@ const APP_ROUTES: Record<string, Hono<AppEnv>> = {
   trx: trxApp,
   trx2: trxApp,
   freellm: freellmApp,
+  fitness: fitnessApp,
   blog: blogApp,
   auth: authRoutes,
   '': portfolioApp,
@@ -115,8 +117,9 @@ app.all('*', async (c) => {
   const response = await subApp.fetch(appRequest, env, c.executionCtx);
 
   // If the app returns 404, try serving from static Assets binding
-  // (for custom domains where Assets binding isn't automatic)
-  if (response.status === 404) {
+  // (for custom domains where Assets binding isn't automatic).
+  // Proxied apps own every path, so a 404 from them is authoritative.
+  if (response.status === 404 && appKey !== 'fitness') {
     const assetResponse = await env.ASSETS.fetch(request);
     if (assetResponse.status !== 404) {
       const responseHeaders = new Headers(assetResponse.headers);

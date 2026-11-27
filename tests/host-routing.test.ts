@@ -11,6 +11,7 @@ test('root domain serves the portfolio', () => {
 test('known subdomains map to their app', () => {
   assert.equal(resolveAppKey('trx.hasit.in'), 'trx');
   assert.equal(resolveAppKey('freellm.hasit.in'), 'freellm');
+  assert.equal(resolveAppKey('fitness.hasit.in'), 'fitness');
   assert.equal(resolveAppKey('blog.hasit.in'), 'blog');
   assert.equal(resolveAppKey('auth.hasit.in'), 'auth');
 });
@@ -57,6 +58,12 @@ test('SPA hosts use private asset roots and resolve clean browser paths', () => 
 
 test('apps without a bundled SPA never resolve into the private asset root', () => {
   assert.equal(getSpaAssetRoot('trx'), null);
+  assert.equal(getSpaAssetRoot('fitness'), null);
   assert.equal(getSpaAssetRoot('blog'), null);
   assert.equal(getSpaAssetRoot('auth'), null);
+});
+
+test('proxied hosts own every path instead of falling back to SPA assets', () => {
+  assert.deepEqual(resolveSpaAssetPaths('fitness', '/dashboard'), []);
+  assert.deepEqual(resolveSpaAssetPaths('fitness', '/assets/index-abc.js'), []);
 });

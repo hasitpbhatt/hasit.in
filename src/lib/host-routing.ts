@@ -9,6 +9,7 @@ export type AppKey =
   | ''
   | 'trx'
   | 'freellm'
+  | 'fitness'
   | 'blog'
   | 'auth';
 
@@ -17,6 +18,7 @@ const SUBDOMAIN_APPS: Record<string, AppKey> = {
   trx: 'trx',
   trx2: 'trx',
   freellm: 'freellm',
+  fitness: 'fitness',
   blog: 'blog',
   auth: 'auth',
 };
