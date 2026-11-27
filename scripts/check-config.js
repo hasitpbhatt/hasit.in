@@ -3,6 +3,7 @@
 //
 // 1. Secrets must never live in wrangler.toml [vars].
 // 2. public/ads.txt must advertise the publisher id from ADSENSE_CLIENT.
+// 3. [assets] html_handling must be "none" so the SPA shell rewrite works.
 //
 // Run with: npm run check:config
 
@@ -33,6 +34,36 @@ for (const key of FORBIDDEN_IN_VARS) {
 }
 
 const adsenseClient = toml.match(/^\s*ADSENSE_CLIENT\s*=\s*"([^"]*)"/m)?.[1]?.trim();
+
+// 3. Asset handling must stay compatible with the Worker's SPA rewrite.
+//
+// The Worker serves app shells by fetching /_spa/<app>/index.html through the
+// ASSETS binding. Any html_handling other than "none" turns that fetch into a
+// 307 to the directory URL, which leaks the private /_spa/ prefix and breaks
+// every SPA subdomain. See the comment in wrangler.toml.
+const assetsSection = toml.match(/\[assets\]([\s\S]*?)(?=\n\[|$)/)?.[1] ?? '';
+
+if (!assetsSection) {
+  errors.push('[assets] section is missing from wrangler.toml');
+} else {
+  const htmlHandling = assetsSection.match(/^\s*html_handling\s*=\s*"([^"]*)"/m)?.[1];
+
+  if (htmlHandling !== 'none') {
+    errors.push(
+      `[assets] html_handling must be "none" (found ${htmlHandling === undefined ? 'the default' : `"${htmlHandling}"`}): ` +
+        'any other value makes ASSETS.fetch("/_spa/<app>/index.html") answer 307 instead of the SPA shell'
+    );
+  }
+
+  const notFoundHandling = assetsSection.match(/^\s*not_found_handling\s*=\s*"([^"]*)"/m)?.[1];
+
+  if (notFoundHandling === 'single-page-application') {
+    errors.push(
+      '[assets] not_found_handling must not be "single-page-application": ' +
+        'asset misses must reach the Worker so it can pick the app for the hostname'
+    );
+  }
+}
 
 if (!adsenseClient) {
   errors.push('ADSENSE_CLIENT is missing from wrangler.toml [vars]');

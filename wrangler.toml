@@ -24,7 +24,34 @@ routes = [
 [assets]
 directory = "./public"
 binding = "ASSETS"
-run_worker_first = ["/", "/api/*", "/v1/*", "/health", "/auth/*", "/admin/*"]
+
+# html_handling MUST be "none". The Worker rewrites clean browser URLs to
+# staged shells such as /_spa/freellm/index.html, then calls ASSETS.fetch().
+# The default ("auto-trailing-slash") answers any .../index.html asset fetch
+# with a 307 to the directory URL, so every SPA host redirected to the private
+# /_spa/ path and rendered nothing. With "none" the file is served directly.
+# Consequence: /books/x (no extension) no longer resolves to /books/x.html.
+# Every link and the sitemap use the .html URL, so nothing depends on it.
+html_handling = "none"
+
+# Asset misses return 404 and fall through to the Worker's fetch() handler,
+# which owns SPA routing. Never "single-page-application": that would answer
+# misses with an app shell before the Worker can pick the right app.
+not_found_handling = "none"
+
+# /_spa/* and /apps/* must reach the Worker so isPrivatePath() can 404 them.
+# Without these entries the asset layer serves the staged build output
+# directly, exposing the private prefix the Worker rewrites to.
+run_worker_first = [
+  "/",
+  "/api/*",
+  "/v1/*",
+  "/health",
+  "/auth/*",
+  "/admin/*",
+  "/_spa/*",
+  "/apps/*",
+]
 
 [[d1_databases]]
 binding = "DB"
