@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { spawnSync } from 'node:child_process';
-import { access, cp, mkdir, rm, writeFile } from 'node:fs/promises';
+import { access, copyFile, mkdir, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -50,22 +50,16 @@ async function resetOutput(appName) {
   return output;
 }
 
-async function buildGames() {
-  const appRoot = path.join(appsRoot, 'games');
-  const output = await resetOutput('games');
-  await installIfNeeded(appRoot);
-  runNpm(appRoot, ['run', 'typecheck']);
-  runNpm(appRoot, [
-    'exec',
-    '--',
-    'vite',
-    'build',
-    '--base',
-    '/',
-    '--outDir',
-    path.relative(appRoot, output),
-    '--emptyOutDir',
-  ]);
+/**
+ * The shared design-token layer lives at /theme.css and /theme.js, outside any
+ * app's build. SPA hosts resolve asset URLs through SPA_ASSET_ROOTS first, so a
+ * copy must exist under the staged output or every page load eats a 404 hop
+ * before falling back to the root asset.
+ */
+async function copySharedTheme(output) {
+  for (const file of ['theme.css', 'theme.js']) {
+    await copyFile(path.join(publicDir, file), path.join(output, file));
+  }
 }
 
 async function buildFreeLlm() {
@@ -84,53 +78,35 @@ async function buildFreeLlm() {
     path.relative(appRoot, output),
     '--emptyOutDir',
   ]);
-}
-
-async function buildFitness() {
-  const appRoot = path.join(appsRoot, 'fitness');
-  const output = await resetOutput('fitness');
-  await installIfNeeded(appRoot);
-  runNpm(appRoot, ['run', 'build']);
-  await cp(path.join(appRoot, 'out'), output, { recursive: true });
-}
-
-async function copyFinance() {
-  const source = path.join(appsRoot, 'finance', 'public');
-  const output = await resetOutput('finance');
-  await cp(source, output, { recursive: true });
-}
-
-async function copyQuiz() {
-  const source = path.join(appsRoot, 'quiz', 'quiz');
-  const output = await resetOutput('quiz');
-  await cp(source, output, {
-    recursive: true,
-    filter: (entry) => !/(^|[\\/])(tests|scripts|proxy)([\\/]|$)/.test(entry),
-  });
+  await copySharedTheme(output);
 }
 
 function generateSitemap() {
   const BASE_URL = 'https://hasit.in';
+
+  // Only list URLs that actually resolve. Notably absent:
+  //  - www: duplicate of the canonical root
+  //  - trx: legacy static faucet, serves / only and 404s on every app route
+  //  - auth: API-only broker, no browsable pages
+  //  - trx2 /claim and /p: the claim form lives at /, and /p requires a slug
   const SUBDOMAINS = [
-    { subdomain: 'www', paths: ['/'] },
-    { subdomain: 'trx', paths: ['/', '/claim', '/admin', '/p'] },
-    { subdomain: 'trx2', paths: ['/', '/claim', '/admin', '/p'] },
+    { subdomain: '', paths: ['/'], priority: '1.0' },
+    { subdomain: 'trx2', paths: ['/'] },
     { subdomain: 'freellm', paths: ['/', '/chat', '/keys', '/models', '/settings'] },
-    { subdomain: 'fitness', paths: ['/', '/workouts', '/food', '/progress', '/quiz', '/today', '/login'] },
-    { subdomain: 'finance', paths: ['/', '/s'] },
-    { subdomain: 'quiz', paths: ['/'] },
-    { subdomain: 'games', paths: ['/'] },
-    { subdomain: 'auth', paths: ['/', '/login', '/callback'] },
-    { subdomain: '', paths: ['/'] },
+    { subdomain: 'fitness', paths: ['/'] },
+    { subdomain: 'quizify', paths: ['/'] },
+    { subdomain: 'blog', paths: ['/'] },
   ];
 
   const urls = [];
-  urls.push(`${BASE_URL}/`);
+  const priorities = new Map();
 
   for (const sub of SUBDOMAINS) {
     const subdomainUrl = sub.subdomain ? `https://${sub.subdomain}.hasit.in` : BASE_URL;
     for (const p of sub.paths) {
-      urls.push(`${subdomainUrl}${p}`);
+      const url = `${subdomainUrl}${p}`;
+      urls.push(url);
+      priorities.set(url, sub.priority ?? '0.8');
     }
   }
 
@@ -140,23 +116,20 @@ function generateSitemap() {
     <loc>${url}</loc>
     <lastmod>${now}</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>${url === BASE_URL + '/' ? '1.0' : '0.8'}</priority>
+    <priority>${priorities.get(url)}</priority>
   </url>`).join('\n');
 
   return `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
         xmlns:xhtml="http://www.w3.org/1999/xhtml">
 ${urlEntries}
-</urlset>`;
+</urlset>
+`;
 }
 
 async function buildApps() {
   await mkdir(outputRoot, { recursive: true });
   await buildFreeLlm();
-  await buildGames();
-  await buildFitness();
-  await copyFinance();
-  await copyQuiz();
 
   // Generate sitemap.xml
   const sitemap = generateSitemap();

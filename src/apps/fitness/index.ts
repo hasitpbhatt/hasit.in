@@ -1,20 +1,13 @@
 import { Hono } from 'hono';
-import { cors } from 'hono/cors';
-import type { Env } from '../../env';
+import type { Env } from '../../env.ts';
+import { proxyFitness } from '../../lib/fitness-proxy.ts';
 
-export const fitnessApp = new Hono<{ Bindings: Env }>();
+type AppEnv = { Bindings: Env };
 
-fitnessApp.use('*', cors({
-  origin: ['https://fitness.hasit.in'],
-  credentials: true,
-}));
+/**
+ * fitness.hasit.in — reverse proxy to the standalone hasitpbhatt/fitness
+ * Cloudflare Pages deployment. Nothing is handled locally.
+ */
+export const fitnessApp = new Hono<AppEnv>();
 
-fitnessApp.get('/', (c) => {
-  return c.json({ 
-    name: 'Fitness', 
-    tagline: 'Workouts, stats, goals',
-    status: 'coming soon',
-  });
-});
-
-fitnessApp.get('/health', (c) => c.json({ status: 'ok', app: 'fitness' }));
+fitnessApp.all('*', (c) => proxyFitness(c.req.raw, c.env));

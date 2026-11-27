@@ -12,7 +12,6 @@ interface CoreUser {
   email: string;
   name: string;
   picture: string;
-  email_verified: number;
 }
 
 async function getCryptoKey(env: Env): Promise<CryptoKey> {
@@ -230,8 +229,7 @@ export async function handleOAuthCallback(env: Env, code: string, app: string): 
   // Link app
   await linkUserApp(env.DB, env, userId, app, tokens.refresh_token!, SCOPES[app as keyof typeof SCOPES] || SCOPES.default);
 
-  // Create session with email_verified
-  const userForSession = await env.DB.prepare('SELECT sub, email, name, picture, email_verified FROM core_users WHERE id = ?')
+  const userForSession = await env.DB.prepare('SELECT sub, email, name, picture FROM core_users WHERE id = ?')
     .bind(userId).first<CoreUser>();
   if (!userForSession) {
     throw new Error('User not found');
@@ -244,7 +242,8 @@ export async function handleOAuthCallback(env: Env, code: string, app: string): 
     picture: userForSession.picture,
     app,
     scope: SCOPES[app as keyof typeof SCOPES] || SCOPES.default,
-    email_verified: userForSession.email_verified === 1,
+    // Accounts only exist via Google OAuth, which verifies the address itself.
+    email_verified: user.email_verified === true,
   }, env, '15m');
 
   const refreshToken = await signRefreshToken({ sub: userForSession.sub, app }, env);

@@ -38,8 +38,6 @@ interface FooterLink {
 
 /**
  * Extra footer links shown on the old VPS faucet page.
- *
- * `quiz` is the parity link that was missing from the current template.
  */
 const FOOTER_LINKS: readonly FooterLink[] = [
   {
@@ -52,7 +50,6 @@ const FOOTER_LINKS: readonly FooterLink[] = [
   },
   { label: 'blog', href: 'https://blog.hasit.in/' },
   { label: 'podcast', href: 'https://open.spotify.com/show/4ONLihbtq88dUDvTtGxT47' },
-  { label: 'quiz', href: 'https://hasit.in/quiz.html' },
   {
     label: 'Faucet in a BOX Ultimate',
     href: 'https://faucetlist.top/faucet-in-a-box-ultimate',

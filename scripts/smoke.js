@@ -44,11 +44,7 @@ const HOST_APPS = {
   'trx.hasit.in': 'trx',
   'trx2.hasit.in': 'trx',
   'freellm.hasit.in': 'freellm',
-  'fitness.hasit.in': 'fitness',
-  'finance.hasit.in': 'finance',
   'blog.hasit.in': 'blog',
-  'quiz.hasit.in': 'quiz',
-  'games.hasit.in': 'games',
   'auth.hasit.in': 'auth',
 };
 
@@ -136,11 +132,7 @@ const SUBDOMAINS = [
   ['trx.hasit.in', 'trx-faucet'],
   ['trx2.hasit.in', 'trx-faucet'],
   ['freellm.hasit.in', 'freellm'],
-  ['fitness.hasit.in', 'fitness'],
-  ['finance.hasit.in', 'finance'],
   ['blog.hasit.in', 'blog'],
-  ['quiz.hasit.in', 'quiz'],
-  ['games.hasit.in', 'games'],
 ];
 
 for (const [host, app] of SUBDOMAINS) {
@@ -170,7 +162,7 @@ for (const path of ['/', '/chat', '/r/test123']) {
 
 // A 307 to /_spa/... means the asset layer redirected the shell fetch instead
 // of returning it. That leaks the private prefix and leaves the app blank.
-for (const host of ['freellm.hasit.in', 'games.hasit.in']) {
+for (const host of ['freellm.hasit.in']) {
   await check(`GET / on ${host} never redirects into /_spa/`, async () => {
     const { response } = await request('/', host);
     assert(response.status === 200, `status ${response.status}`);

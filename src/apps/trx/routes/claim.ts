@@ -224,22 +224,34 @@ claimRoutes.post(
         return c.body(null, 302, { Location: '/', 'Set-Cookie': flash });
       }
 
-      await trx.claimlog.insert(c.env.DB, { address, ip, reward, shortlink: '' });
-      await trx.ips.setLastUsed(c.env.DB, ip);
-      await trx.addresses.setLastUsed(c.env.DB, address);
-      await trx.streaks.upsert(c.env.DB, address, streak.streak, streak.day);
+      // Coins have already been sent. A bookkeeping failure here must never
+      // surface as a 500: that tells the user the claim failed while the payout
+      // stands, and it skips the rate-limit rows below, letting the same IP and
+      // address claim again immediately against a faucet that pays every time.
+      try {
+        await trx.claimlog.insert(c.env.DB, { address, ip, reward });
+        await trx.ips.setLastUsed(c.env.DB, ip);
+        await trx.addresses.setLastUsed(c.env.DB, address);
+        await trx.streaks.upsert(c.env.DB, address, streak.streak, streak.day);
 
-      if (result.balance?.balance) {
-        await trx.claimlog.setBalance(c.env.DB, result.balance.balance);
+        if (result.balance?.balance) {
+          await trx.claimlog.setBalance(c.env.DB, result.balance.balance);
+        }
+      } catch (error) {
+        console.error('trx claim bookkeeping failed after payout', { address, ip, reward, error });
       }
 
       if (ref && ref !== address && isValidTRXAddress(ref)) {
-        const refRecord = await trx.refs.getByAddress(c.env.DB, ref);
-        if (refRecord) {
-          const refAmount = Math.floor((reward * referralPct) / 100);
-          if (refAmount > 0) {
-            await faucetpay.sendReferralEarnings(c.env, ref, refAmount, ip);
+        try {
+          const refRecord = await trx.refs.getByAddress(c.env.DB, ref);
+          if (refRecord) {
+            const refAmount = Math.floor((reward * referralPct) / 100);
+            if (refAmount > 0) {
+              await faucetpay.sendReferralEarnings(c.env, ref, refAmount, ip);
+            }
           }
+        } catch (error) {
+          console.error('trx referral payout failed', { ref, reward, error });
         }
       }
 

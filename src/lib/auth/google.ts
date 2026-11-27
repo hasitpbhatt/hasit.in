@@ -2,11 +2,7 @@ import type { Env } from '../../env';
 
 export const SCOPES = {
   freellm: 'openid email profile',
-  fitness: 'openid email profile https://www.googleapis.com/auth/fitness.activity.read',
-  finance: 'openid email profile',
-  quiz: 'openid email profile',
   blog: 'openid email profile',
-  games: 'openid email profile',
   trx: 'openid email profile',
   default: 'openid email profile',
 } as const;
@@ -79,7 +75,8 @@ export async function exchangeCodeForTokens(
   });
 
   if (!response.ok) {
-    throw new Error(`Google token exchange failed with status ${response.status}`);
+    const detail = await response.text().catch(() => '');
+    throw new Error(`Google token exchange failed with status ${response.status}: ${detail}`);
   }
 
   const tokens = await response.json() as GoogleTokens;

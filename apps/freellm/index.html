@@ -2,6 +2,18 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <!-- Theme must be applied before the first paint. Keep this inline and synchronous. -->
+    <script>
+      (function () {
+        try {
+          var stored = localStorage.getItem('theme');
+          if (stored === 'dark') { document.documentElement.className += ' dark-theme'; return; }
+          if (stored === 'light') { document.documentElement.className += ' light-theme'; return; }
+        } catch (e) {}
+        var dark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+        document.documentElement.className += dark ? ' dark-theme' : ' light-theme';
+      })();
+    </script>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta
@@ -10,6 +22,7 @@
     />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="/theme.css" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
     <title>freellm — the community-owned arena for indie AI models</title>
     <script data-ad-client="ca-pub-7046934020222763" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
@@ -17,5 +30,6 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    <script defer src="/theme.js"></script>
   </body>
 </html>

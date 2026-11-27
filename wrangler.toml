@@ -10,11 +10,13 @@ routes = [
   { pattern = "trx2.hasit.in", custom_domain = true },
   # trx.hasit.in is intentionally absent: being reverted to its previous hosting.
   { pattern = "freellm.hasit.in", custom_domain = true },
+  # fitness.hasit.in is proxied by this Worker to the standalone
+  # hasitpbhatt/fitness Cloudflare Pages project (see src/lib/fitness-proxy.ts).
+  # It must stay bound here, otherwise wrangler prunes the custom domain on
+  # deploy and the hostname stops resolving.
   { pattern = "fitness.hasit.in", custom_domain = true },
-  { pattern = "finance.hasit.in", custom_domain = true },
   # blog.hasit.in is intentionally absent: hosted on a separate VPS.
-  { pattern = "quiz.hasit.in", custom_domain = true },
-  { pattern = "games.hasit.in", custom_domain = true },
+  # quiz.hasit.in is intentionally absent: served by the quizify Pages project.
   { pattern = "auth.hasit.in", custom_domain = true },
 ]
 
@@ -82,13 +84,18 @@ TURNSTILE_SITE_KEY = "0x4AAAAAAGLkTZr2vBCLFfZJ"
 GOOGLE_CLIENT_ID = "790517677532-hbolt3juspd1pqvenepc8708msss5hag.apps.googleusercontent.com"
 GOOGLE_REDIRECT_URI = "https://auth.hasit.in/callback"
 
+# fitness.hasit.in is reverse-proxied to its standalone Pages deployment.
+# The upstream owns its own CSP and Permissions-Policy, so the Worker's
+# security middleware steps aside for this hostname only.
+FITNESS_ORIGIN = "https://fitness-8lk.pages.dev"
+
 # Secrets (set via: wrangler secret put SECRET_NAME)
 # TURNSTILE_SECRET
 # FAUCETPAY_API_KEY
 # JWT_PRIVATE_KEY (ES256 PEM)
 # JWT_PUBLIC_KEY (ES256 PEM)
 # GOOGLE_CLIENT_SECRET
-# FREELLM_API_KEY (for Quiz AI, Finance narratives, Games pinpoint)
+# FREELLM_API_KEY (used by freellm and the quiz AI proxy)
 # FREELLM_MODEL (default: gemini-2.5-flash)
 # ENCRYPTION_KEY (FreeLLM key-vault encryption)
 # RESEND_API_KEY (FreeLLM email verification)

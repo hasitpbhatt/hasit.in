@@ -5,10 +5,7 @@ import { trxApp } from './apps/trx';
 import { portfolioApp } from './apps/portfolio';
 import { freellmApp } from './apps/freellm';
 import { fitnessApp } from './apps/fitness';
-import { financeApp } from './apps/finance';
 import { blogApp } from './apps/blog';
-import { quizApp } from './apps/quiz';
-import { gamesApp } from './apps/games';
 import { authRoutes } from './lib/auth/routes';
 import { isLocalHostname, resolveAppKey, resolveSpaAssetPaths, type AppKey } from './lib/host-routing';
 import { securityHeadersMiddleware } from './middleware/security-headers';
@@ -21,10 +18,7 @@ const APP_ROUTES: Record<string, Hono<AppEnv>> = {
   trx2: trxApp,
   freellm: freellmApp,
   fitness: fitnessApp,
-  finance: financeApp,
   blog: blogApp,
-  quiz: quizApp,
-  games: gamesApp,
   auth: authRoutes,
   '': portfolioApp,
 };
@@ -87,11 +81,15 @@ app.all('*', async (c) => {
   }
 
   const appKey =
-      devApp !== null && devApp in APP_ROUTES ? devApp : resolveAppKey(effectiveHostname, local);
+      devApp !== null && devApp in APP_ROUTES
+        ? devApp
+        : resolveAppKey(effectiveHostname, local);
+
+  const pathname = url.pathname;
 
   const isPageRequest = request.method === 'GET' || request.method === 'HEAD';
-  if (isPageRequest && !isApiPath(url.pathname)) {
-    for (const assetPath of resolveSpaAssetPaths(appKey, url.pathname)) {
+  if (isPageRequest && !isApiPath(pathname)) {
+    for (const assetPath of resolveSpaAssetPaths(appKey, pathname)) {
       const assetUrl = new URL(request.url);
       assetUrl.pathname = assetPath;
       const spaResponse = await env.ASSETS.fetch(new Request(assetUrl, request));
@@ -114,11 +112,14 @@ app.all('*', async (c) => {
   headers.set('X-Hasit-Host', effectiveHostname);
   headers.set('X-Hasit-App', appKey);
 
-  const response = await subApp.fetch(new Request(request, { headers }), env, c.executionCtx);
+  const appRequest = new Request(request, { headers });
+
+  const response = await subApp.fetch(appRequest, env, c.executionCtx);
 
   // If the app returns 404, try serving from static Assets binding
-  // (for custom domains where Assets binding isn't automatic)
-  if (response.status === 404) {
+  // (for custom domains where Assets binding isn't automatic).
+  // Proxied apps own every path, so a 404 from them is authoritative.
+  if (response.status === 404 && appKey !== 'fitness') {
     const assetResponse = await env.ASSETS.fetch(request);
     if (assetResponse.status !== 404) {
       const responseHeaders = new Headers(assetResponse.headers);

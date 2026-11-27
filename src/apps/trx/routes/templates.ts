@@ -10,6 +10,7 @@ import {
 import { renderNoDataState } from '../../../lib/ui-components.ts';
 import { renderAuthorNav, renderQuoteOfDay } from '../../../lib/quotes.ts';
 import { renderCmcWidget, renderFaucetFooterLinks } from '../../../lib/cmc-widget.ts';
+import { THEME_BOOTSTRAP, THEME_RUNTIME, renderThemeToggle } from '../../../lib/theme';
 
 export interface ClaimPageData {
   page: 'eligible' | 'paid' | 'visit_later' | 'disabled';
@@ -55,14 +56,12 @@ function renderNav(): string {
           <a href="https://trx.hasit.in" class="nav-dropdown-item" role="menuitem"><span class="nav-dropdown-icon">💰</span><span>TRX Faucet</span></a>
           <a href="https://freellm.hasit.in" class="nav-dropdown-item" role="menuitem"><span class="nav-dropdown-icon">🔑</span><span>FreeLLM</span></a>
           <a href="https://fitness.hasit.in" class="nav-dropdown-item" role="menuitem"><span class="nav-dropdown-icon">💪</span><span>Fitness</span></a>
-          <a href="https://finance.hasit.in" class="nav-dropdown-item" role="menuitem"><span class="nav-dropdown-icon">📊</span><span>Finance</span></a>
-          <a href="https://games.hasit.in" class="nav-dropdown-item" role="menuitem"><span class="nav-dropdown-icon">🎮</span><span>Games</span></a>
-          <a href="https://quiz.hasit.in" class="nav-dropdown-item" role="menuitem"><span class="nav-dropdown-icon">📚</span><span>Quiz</span></a>
           <a href="https://quizify.hasit.in" class="nav-dropdown-item" role="menuitem"><span class="nav-dropdown-icon">⚡</span><span>Quizify</span></a>
           <a href="https://airgap.hasit.in" class="nav-dropdown-item" role="menuitem"><span class="nav-dropdown-icon">🛡️</span><span>Airgap</span></a>
           <a href="https://devcheap.click" class="nav-dropdown-item" role="menuitem"><span class="nav-dropdown-icon">💰</span><span>DevCheap</span></a>
         </div>
       </div>
+      ${renderThemeToggle()}
     </div>
   </div>
 </nav>`;
@@ -72,6 +71,7 @@ function renderHead(data: ClaimPageData): string {
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
+  ${THEME_BOOTSTRAP}
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Hasit's Tron (TRX) Faucet</title>
@@ -82,6 +82,7 @@ function renderHead(data: ClaimPageData): string {
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="//cdn.jsdelivr.net/bootstrap/3.3.4/css/bootstrap.min.css">
+  <link rel="stylesheet" href="/theme.css">
   <link rel="stylesheet" href="/styles-trx.css">
   ${renderAnalyticsTags(data.site)}
   ${renderAdsenseLoader(data.site)}
@@ -145,7 +146,7 @@ function renderClaimForm(data: ClaimPageData): string {
         <input type="text" class="form-control" id="trxAddress" name="address" placeholder="Tron (TRX) address" value="${escapeHtml(data.address)}" required ${!data.enabled ? 'disabled' : ''}>
       </div>
       <div class="col form-group mb-2">
-        <div class="cf-turnstile" data-sitekey="${escapeHtml(data.turnstileSiteKey)}" data-theme="dark" data-action="claim" data-callback="trxTurnstileSolved" data-expired-callback="trxTurnstileExpired"></div>
+        <div class="cf-turnstile" data-sitekey="${escapeHtml(data.turnstileSiteKey)}" data-theme="auto" data-action="claim" data-callback="trxTurnstileSolved" data-expired-callback="trxTurnstileExpired"></div>
       </div>
     </div>
   </div>
@@ -261,6 +262,7 @@ ${renderFooter(data)}
 <script src="//cdn.jsdelivr.net/jquery/2.1.4/jquery.min.js"></script>
 <script src="//cdn.jsdelivr.net/bootstrap/3.3.4/js/bootstrap.min.js"></script>
 <script src="/interactions.js" defer></script>
+${THEME_RUNTIME}
 </body>
 </html>`;
 }

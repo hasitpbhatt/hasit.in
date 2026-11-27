@@ -12,25 +12,18 @@ const BASE_URL = 'https://hasit.in';
 
 /** Known subdomains and their paths */
 const SUBDOMAINS = [
-  { subdomain: 'www', name: 'www' },
-  { subdomain: 'trx', name: 'TRX Faucet', paths: ['/', '/claim', '/admin', '/p'] },
-  { subdomain: 'trx2', name: 'TRX Faucet v2', paths: ['/', '/claim', '/admin', '/p'] },
-  { subdomain: 'freellm', name: 'FreeLLM', paths: ['/', '/chat', '/keys', '/models', '/settings'] },
-  { subdomain: 'fitness', name: 'Fitness', paths: ['/', '/workouts', '/food', '/progress', '/quiz', '/today', '/login'] },
-  { subdomain: 'finance', name: 'Finance', paths: ['/', '/s'] },
-  { subdomain: 'quiz', name: 'Quiz (MindVault)', paths: ['/'] },
-  { subdomain: 'games', name: 'Games', paths: ['/'] },
-  { subdomain: 'auth', name: 'Auth', paths: ['/', '/login', '/callback'] },
   { subdomain: '', name: 'Portfolio', paths: ['/'] },
+  { subdomain: 'trx2', name: 'TRX Faucet', paths: ['/'] },
+  { subdomain: 'freellm', name: 'FreeLLM', paths: ['/', '/chat', '/keys', '/models', '/settings'] },
+  { subdomain: 'fitness', name: 'Fitness', paths: ['/'] },
+  { subdomain: 'quizify', name: 'Quizify', paths: ['/'] },
+  { subdomain: 'blog', name: 'Blog', paths: ['/'] },
 ];
 
 function generateSitemap() {
   const urls = [];
 
-  // Main domain
-  urls.push(`${BASE_URL}/`);
-
-  // Subdomains
+  // Subdomains (the '' entry supplies the canonical root)
   for (const sub of SUBDOMAINS) {
     const subdomainUrl = sub.subdomain ? `https://${sub.subdomain}.hasit.in` : BASE_URL;
 
@@ -64,7 +57,8 @@ function generateSitemap() {
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
         xmlns:xhtml="http://www.w3.org/1999/xhtml">
 ${urlEntries}
-</urlset>`;
+</urlset>
+`;
 }
 
 async function main() {

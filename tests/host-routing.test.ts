@@ -12,10 +12,7 @@ test('known subdomains map to their app', () => {
   assert.equal(resolveAppKey('trx.hasit.in'), 'trx');
   assert.equal(resolveAppKey('freellm.hasit.in'), 'freellm');
   assert.equal(resolveAppKey('fitness.hasit.in'), 'fitness');
-  assert.equal(resolveAppKey('finance.hasit.in'), 'finance');
   assert.equal(resolveAppKey('blog.hasit.in'), 'blog');
-  assert.equal(resolveAppKey('quiz.hasit.in'), 'quiz');
-  assert.equal(resolveAppKey('games.hasit.in'), 'games');
   assert.equal(resolveAppKey('auth.hasit.in'), 'auth');
 });
 
@@ -46,13 +43,7 @@ test('isLocalHostname recognises loopback only', () => {
 });
 
 test('SPA hosts use private asset roots and resolve clean browser paths', () => {
-  for (const [hostname, app] of [
-    ['freellm.hasit.in', 'freellm'],
-    ['fitness.hasit.in', 'fitness'],
-    ['finance.hasit.in', 'finance'],
-    ['quiz.hasit.in', 'quiz'],
-    ['games.hasit.in', 'games'],
-  ] as const) {
+  for (const [hostname, app] of [['freellm.hasit.in', 'freellm']] as const) {
     assert.equal(resolveAppKey(hostname), app);
     const root = getSpaAssetRoot(app);
     assert.ok(root);
@@ -63,5 +54,16 @@ test('SPA hosts use private asset roots and resolve clean browser paths', () => 
   assert.deepEqual(resolveSpaAssetPaths('freellm', '/chat'), ['/_spa/freellm/index.html']);
   assert.deepEqual(resolveSpaAssetPaths('freellm', '/r/test123'), ['/_spa/freellm/index.html']);
   assert.deepEqual(resolveSpaAssetPaths('freellm', '/assets/index-abc.js'), ['/_spa/freellm/assets/index-abc.js']);
-  assert.deepEqual(resolveSpaAssetPaths('fitness', '/gu/workouts/'), ['/_spa/fitness/gu/workouts/index.html']);
+});
+
+test('apps without a bundled SPA never resolve into the private asset root', () => {
+  assert.equal(getSpaAssetRoot('trx'), null);
+  assert.equal(getSpaAssetRoot('fitness'), null);
+  assert.equal(getSpaAssetRoot('blog'), null);
+  assert.equal(getSpaAssetRoot('auth'), null);
+});
+
+test('proxied hosts own every path instead of falling back to SPA assets', () => {
+  assert.deepEqual(resolveSpaAssetPaths('fitness', '/dashboard'), []);
+  assert.deepEqual(resolveSpaAssetPaths('fitness', '/assets/index-abc.js'), []);
 });

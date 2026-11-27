@@ -86,7 +86,6 @@ apiRoutes.get('/claims/:address', async (c) => {
     claims: claims.results.map((row) => ({
       time: row.time,
       reward: row.reward,
-      shortlink: row.shortlink,
     })),
   });
 });
