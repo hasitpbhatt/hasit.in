@@ -10,8 +10,11 @@ routes = [
   { pattern = "trx2.hasit.in", custom_domain = true },
   # trx.hasit.in is intentionally absent: being reverted to its previous hosting.
   { pattern = "freellm.hasit.in", custom_domain = true },
-  # fitness.hasit.in is intentionally absent: served by the standalone
-  # hasitpbhatt/fitness Cloudflare Pages project.
+  # fitness.hasit.in is proxied by this Worker to the standalone
+  # hasitpbhatt/fitness Cloudflare Pages project (see src/lib/fitness-proxy.ts).
+  # It must stay bound here, otherwise wrangler prunes the custom domain on
+  # deploy and the hostname stops resolving.
+  { pattern = "fitness.hasit.in", custom_domain = true },
   # blog.hasit.in is intentionally absent: hosted on a separate VPS.
   # quiz.hasit.in is intentionally absent: served by the quizify Pages project.
   { pattern = "auth.hasit.in", custom_domain = true },

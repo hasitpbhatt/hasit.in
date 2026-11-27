@@ -1,7 +1,7 @@
 /**
- * Shared theme toggle. Styling lives in /theme.css; the click handler is here
- * rather than relying on /theme.js, because React may mount this button after
- * theme.js has already run its one-shot binding pass.
+ * Shared theme toggle. Styling lives in /theme.css and the click is handled by
+ * the delegated listener in /theme.js, so this stays markup-only: adding an
+ * onClick here would toggle twice per click.
  */
 export default function ThemeToggle() {
   return (
@@ -11,7 +11,6 @@ export default function ThemeToggle() {
       data-theme-toggle
       aria-label="Toggle colour theme"
       title="Toggle colour theme"
-      onClick={() => window.HasitTheme?.toggle()}
     >
       <svg
         className="icon-sun"

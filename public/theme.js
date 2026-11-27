@@ -55,13 +55,18 @@
   }
 
   function init() {
-    var buttons = document.querySelectorAll('[data-theme-toggle]');
-    for (var i = 0; i < buttons.length; i++) {
-      var btn = buttons[i];
-      if (btn.dataset.themeToggleBound) continue;
-      btn.dataset.themeToggleBound = '1';
-      btn.addEventListener('click', toggle);
-    }
+    // One delegated listener instead of binding each button. React (and any
+    // other client renderer) mounts its own toggles after this script runs, and
+    // a per-button pass would race with a component that also handles the click
+    // — the two handlers would cancel each other out. Delegation covers buttons
+    // that appear at any time and guarantees exactly one handler.
+    document.addEventListener('click', function (event) {
+      var target = event.target;
+      if (!target || typeof target.closest !== 'function') return;
+      if (!target.closest('[data-theme-toggle]')) return;
+      event.preventDefault();
+      toggle();
+    });
 
     // Follow the OS only while the visitor has not chosen a theme themselves.
     if (window.matchMedia) {
@@ -74,11 +79,7 @@
     }
   }
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
-  } else {
-    init();
-  }
+  init();
 
   window.HasitTheme = { apply: apply, toggle: toggle, current: current };
 })();
