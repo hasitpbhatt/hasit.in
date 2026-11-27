@@ -15,8 +15,8 @@ if (typeof document !== 'undefined' && !document.getElementById('today-card-styl
       .reward-referral .squad-tile { animation: pulse-gain 0.6s ease-out; }
     }
     @keyframes pulse-gain {
-      0% { box-shadow: 0 0 0 0 var(--green); }
-      50% { box-shadow: 0 0 0 8px var(--green); }
+      0% { box-shadow: 0 0 0 0 var(--success); }
+      50% { box-shadow: 0 0 0 8px var(--success); }
       100% { box-shadow: 0 0 0 0 transparent; }
     }
     /* Earn tile grid — single column on mobile */
@@ -169,7 +169,7 @@ export default function TodayCard({
                   cy="28"
                   r="24"
                   fill="none"
-                  stroke="var(--line)"
+                  stroke="var(--border)"
                   strokeWidth="4"
                   className="text-line"
                 />
@@ -178,7 +178,7 @@ export default function TodayCard({
                   cy="28"
                   r="24"
                   fill="none"
-                  stroke="var(--gain)"
+                  stroke="var(--success)"
                   strokeWidth="4"
                   strokeLinecap="round"
                   className="text-gain"

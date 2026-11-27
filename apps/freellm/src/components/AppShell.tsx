@@ -4,6 +4,7 @@ import { Credits } from '../components/ui'
 import { useAuth } from '../lib/useAuth'
 import { MobileBottomNav } from './nav/MobileBottomNav'
 import { MobileMenu } from './nav/MobileMenu'
+import ThemeToggle from './ThemeToggle'
 
 const navItems = [
   { to: '/dashboard', label: 'Dashboard' },
@@ -57,6 +58,7 @@ export default function AppShell() {
             )}
           </nav>
           <div className="ml-auto flex min-h-[44px] items-center gap-3">
+            <ThemeToggle />
             {loading ? (
               <span className="text-sm text-muted" role="status">Checking sign-in…</span>
             ) : user ? (

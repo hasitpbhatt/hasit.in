@@ -7,6 +7,7 @@ import {
   renderAdsenseLoader,
   renderAnalyticsTags,
 } from '../../lib/site-config';
+import { THEME_BOOTSTRAP, THEME_RUNTIME, renderThemeToggle } from '../../lib/theme';
 
 export const portfolioApp = new Hono<{ Bindings: Env }>();
 
@@ -21,25 +22,7 @@ portfolioApp.get('/', (c) => {
   const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
-  <script>
-    (function() {
-      try {
-        var storageTheme = localStorage.getItem('theme');
-        if (storageTheme === 'dark') {
-          document.documentElement.classList.add('dark-theme');
-          return;
-        } else if (storageTheme === 'light') {
-          document.documentElement.classList.add('light-theme');
-          return;
-        }
-      } catch (e) {}
-      if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-        document.documentElement.classList.add('dark-theme');
-      } else {
-        document.documentElement.classList.add('light-theme');
-      }
-    })();
-  </script>
+  ${THEME_BOOTSTRAP}
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Hasit Bhatt - Observer · Thinker · Builder</title>
@@ -51,6 +34,7 @@ portfolioApp.get('/', (c) => {
   <meta name="twitter:card" content="summary_large_image">
   ${renderAnalyticsTags(site)}
   ${renderAdsenseLoader(site)}
+  <link rel="stylesheet" href="/theme.css">
   <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
@@ -76,10 +60,7 @@ portfolioApp.get('/', (c) => {
             <a href="https://devcheap.click" class="nav-dropdown-item" role="menuitem"><span class="nav-dropdown-icon">💰</span><span>DevCheap</span></a>
           </div>
         </div>
-        <button id="theme-toggle" type="button" class="nav-link" aria-label="Toggle theme" style="background: none; border: none; cursor: pointer; padding: 0 0 0 8px; display: flex; align-items: center; justify-content: center;">
-          <svg class="sun-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 18px; height: 18px; display: none;"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
-          <svg class="moon-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 18px; height: 18px; display: none;"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
-        </button>
+        ${renderThemeToggle()}
       </div>
       <button class="nav-hamburger" type="button" aria-label="Menu" aria-expanded="false">
         <span></span>
@@ -366,16 +347,6 @@ portfolioApp.get('/', (c) => {
       sections.forEach(function(section) { observer.observe(section); });
     })();
 
-    // Theme Toggle
-    (function() {
-      var btn = document.getElementById('theme-toggle');
-      if (!btn) return;
-      var sun = btn.querySelector('.sun-icon'); var moon = btn.querySelector('.moon-icon');
-      function updateToggleIcon(theme) { if (theme === 'dark') { sun.style.display = 'block'; moon.style.display = 'none'; } else { sun.style.display = 'none'; moon.style.display = 'block'; } }
-      var currentTheme = document.documentElement.classList.contains('dark-theme') ? 'dark' : 'light'; updateToggleIcon(currentTheme);
-      btn.addEventListener('click', function() { var isDark = document.documentElement.classList.contains('dark-theme'); if (isDark) { document.documentElement.classList.remove('dark-theme'); document.documentElement.classList.add('light-theme'); try { localStorage.setItem('theme', 'light'); } catch (e) {} updateToggleIcon('light'); } else { document.documentElement.classList.remove('light-theme'); document.documentElement.classList.add('dark-theme'); try { localStorage.setItem('theme', 'dark'); } catch (e) {} updateToggleIcon('dark'); } });
-    })();
-
     // Mobile Hamburger
     (function() {
       var hamburger = document.querySelector('.nav-hamburger'); var menu = document.querySelector('.nav-links');
@@ -393,6 +364,7 @@ portfolioApp.get('/', (c) => {
       document.addEventListener('click', function() { trigger.setAttribute('aria-expanded', 'false'); menu.style.display = 'none'; });
     })();
   </script>
+  ${THEME_RUNTIME}
 </body>
 </html>`;
   return c.html(html);

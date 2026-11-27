@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { spawnSync } from 'node:child_process';
-import { access, mkdir, rm, writeFile } from 'node:fs/promises';
+import { access, copyFile, mkdir, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -50,6 +50,18 @@ async function resetOutput(appName) {
   return output;
 }
 
+/**
+ * The shared design-token layer lives at /theme.css and /theme.js, outside any
+ * app's build. SPA hosts resolve asset URLs through SPA_ASSET_ROOTS first, so a
+ * copy must exist under the staged output or every page load eats a 404 hop
+ * before falling back to the root asset.
+ */
+async function copySharedTheme(output) {
+  for (const file of ['theme.css', 'theme.js']) {
+    await copyFile(path.join(publicDir, file), path.join(output, file));
+  }
+}
+
 async function buildFreeLlm() {
   const appRoot = path.join(appsRoot, 'freellm');
   const output = await resetOutput('freellm');
@@ -66,6 +78,7 @@ async function buildFreeLlm() {
     path.relative(appRoot, output),
     '--emptyOutDir',
   ]);
+  await copySharedTheme(output);
 }
 
 function generateSitemap() {

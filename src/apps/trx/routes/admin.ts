@@ -14,6 +14,7 @@ import {
 } from '../../../middleware/session';
 import { setNewPass, verifyPass, safeEqual } from '../../../lib/auth/db';
 import { escapeHtml } from '../../../lib/html';
+import { THEME_BOOTSTRAP, THEME_RUNTIME, renderThemeToggle } from '../../../lib/theme';
 import { strictRateLimitMiddleware } from '../../../middleware/rate-limit';
 import type { Env } from '../../../env';
 
@@ -218,19 +219,26 @@ function renderAdminLogin(): string {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Admin Login - TRX Faucet</title>
+    ${THEME_BOOTSTRAP}
   <link rel="stylesheet" href="//cdn.jsdelivr.net/bootstrap/3.3.4/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/theme.css">
   <style>
-    body { background: #f4f2ec; min-height: 100vh; display: flex; align-items: center; justify-content: center; font-family: 'Inter', sans-serif; }
-    .login-card { background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); width: 100%; max-width: 400px; }
+      body { background: var(--bg); color: var(--text-primary); min-height: 100vh; display: flex; align-items: center; justify-content: center; font-family: var(--font-ui); }
+      .login-card { background: var(--surface); border: 1px solid var(--border); padding: 2rem; border-radius: var(--radius); box-shadow: var(--shadow-md); width: 100%; max-width: 400px; }
+      .login-card h2 { color: var(--text-primary); }
     .form-group { margin-bottom: 1rem; }
-    .form-control { width: 100%; padding: 0.75rem; border: 1px solid #e6e2d8; border-radius: 6px; font-size: 1rem; }
-    .btn-primary { background: #5B5BD6; border: none; width: 100%; padding: 0.75rem; font-weight: 600; }
-    .btn-primary:hover { background: #4949C2; }
-    .alert { padding: 0.75rem 1rem; border-radius: 6px; margin-bottom: 1rem; }
-    .alert-danger { background: #fee; color: #D14B4B; border: 1px solid #fcc; }
+      .form-group label { color: var(--text-secondary); }
+      .form-control { width: 100%; padding: 0.75rem; background: var(--bg); color: var(--text-primary); border: 1px solid var(--border); border-radius: var(--radius-ui); font-size: 1rem; }
+      .form-control:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 3px var(--accent-subtle); }
+      .btn-primary { background: var(--accent); border: none; width: 100%; padding: 0.75rem; font-weight: 600; }
+      .btn-primary:hover, .btn-primary:focus { background: var(--accent-hover); }
+      .alert { padding: 0.75rem 1rem; border-radius: var(--radius-ui); margin-bottom: 1rem; }
+      .alert-danger { background: var(--danger-subtle); color: var(--danger); border: 1px solid var(--danger); }
+      .theme-toggle { position: fixed; top: 1rem; right: 1rem; }
   </style>
 </head>
 <body>
+    ${renderThemeToggle()}
   <div class="login-card">
     <h2 class="text-center mb-4">Admin Login</h2>
     <form method="post">
@@ -241,6 +249,7 @@ function renderAdminLogin(): string {
       <button type="submit" class="btn btn-primary">Login</button>
     </form>
   </div>
+  ${THEME_RUNTIME}
 </body>
 </html>`;
 }
@@ -266,19 +275,36 @@ function renderAdminDashboard(data: AdminDashboardData): string {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Admin Dashboard - TRX Faucet</title>
+    ${THEME_BOOTSTRAP}
   <link rel="stylesheet" href="//cdn.jsdelivr.net/bootstrap/3.3.4/css/bootstrap.min.css">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/theme.css">
   <style>
-    body { font-family: 'Inter', sans-serif; background: #f4f2ec; }
-    .navbar { background: white; border-bottom: 1px solid #e6e2d8; padding: 1rem 0; }
+      body { font-family: var(--font-ui); background: var(--bg); color: var(--text-primary); }
+      .navbar { background: var(--nav-bg); border-bottom: 1px solid var(--border); padding: 1rem 0; margin-bottom: 0; }
+      .navbar .container { display: flex; align-items: center; gap: 0.5rem; }
+      .navbar-brand { color: var(--text-primary); height: auto; padding: 0; }
+      .navbar-brand:hover, .navbar-brand:focus { color: var(--accent); }
+      .navbar .pull-right { margin-left: auto; display: flex; align-items: center; gap: 0.5rem; }
     .container { max-width: 1200px; }
-    .card { border: 1px solid #e6e2d8; border-radius: 8px; margin-bottom: 1.5rem; }
-    .card-header { background: #f4f2ec; border-bottom: 1px solid #e6e2d8; padding: 1rem; font-weight: 600; }
+      .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-ui); margin-bottom: 1.5rem; }
+      .card-header { background: var(--surface-hover); color: var(--text-primary); border-bottom: 1px solid var(--border); padding: 1rem; font-weight: 600; }
     .stat-card { text-align: center; padding: 1.5rem; }
-    .stat-value { font-size: 2rem; font-weight: 700; color: #5B5BD6; }
-    .stat-label { color: #8A877D; font-size: 0.875rem; }
-    .table th { background: #f4f2ec; }
-    .btn { border-radius: 6px; }
+      .stat-value { font-size: 2rem; font-weight: 700; color: var(--accent); }
+      .stat-label { color: var(--text-tertiary); font-size: 0.875rem; }
+      .table { color: var(--text-primary); }
+      .table th { background: var(--surface-hover); color: var(--text-secondary); }
+      .table > tbody > tr > td { border-top-color: var(--border); }
+      .table-striped > tbody > tr:nth-of-type(odd) { background: var(--surface-hover); }
+      .btn { border-radius: var(--radius-ui); }
+      .btn-default { background: var(--surface); border-color: var(--border); color: var(--text-primary); }
+      .btn-default:hover, .btn-default:focus { background: var(--surface-hover); border-color: var(--border-strong); color: var(--text-primary); }
+      .btn-primary { background: var(--accent); border-color: var(--accent); }
+      .btn-primary:hover, .btn-primary:focus { background: var(--accent-hover); border-color: var(--accent-hover); }
+      .form-control { background: var(--bg); color: var(--text-primary); border: 1px solid var(--border); border-radius: var(--radius-ui); }
+      .form-control:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-subtle); }
+      .alert-success { background: var(--success-subtle); color: var(--success); border-color: var(--success); }
+      .alert-danger { background: var(--danger-subtle); color: var(--danger); border-color: var(--danger); }
+      .alert-info { background: var(--accent-subtle); color: var(--accent); border-color: var(--accent); }
   </style>
 </head>
 <body>
@@ -286,6 +312,7 @@ function renderAdminDashboard(data: AdminDashboardData): string {
     <div class="container">
       <a class="navbar-brand" href="/admin">TRX Faucet Admin</a>
       <div class="pull-right">
+          ${renderThemeToggle()}
         <a href="/admin/settings" class="btn btn-default btn-sm">Settings</a>
         <a href="/admin/logout" class="btn btn-primary btn-sm">Logout</a>
       </div>
@@ -339,6 +366,7 @@ function renderAdminDashboard(data: AdminDashboardData): string {
       </div>
     </div>
   </div>
+  ${THEME_RUNTIME}
 </body>
 </html>`;
 }
@@ -355,18 +383,30 @@ function renderAdminSettings(settings: Map<string, string>, csrf: string): strin
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Admin Settings - TRX Faucet</title>
+    ${THEME_BOOTSTRAP}
   <link rel="stylesheet" href="//cdn.jsdelivr.net/bootstrap/3.3.4/css/bootstrap.min.css">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/theme.css">
   <style>
-    body { font-family: 'Inter', sans-serif; background: #f4f2ec; }
-    .navbar { background: white; border-bottom: 1px solid #e6e2d8; padding: 1rem 0; }
+      body { font-family: var(--font-ui); background: var(--bg); color: var(--text-primary); }
+      .navbar { background: var(--nav-bg); border-bottom: 1px solid var(--border); padding: 1rem 0; margin-bottom: 0; }
+      .navbar .container { display: flex; align-items: center; gap: 0.5rem; }
+      .navbar-brand { color: var(--text-primary); height: auto; padding: 0; }
+      .navbar-brand:hover, .navbar-brand:focus { color: var(--accent); }
+      .navbar .pull-right { margin-left: auto; display: flex; align-items: center; gap: 0.5rem; }
     .container { max-width: 1000px; }
-    .card { border: 1px solid #e6e2d8; border-radius: 8px; margin-bottom: 1.5rem; }
-    .card-header { background: #f4f2ec; border-bottom: 1px solid #e6e2d8; padding: 1rem; font-weight: 600; }
+      .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-ui); margin-bottom: 1.5rem; }
+      .card-header { background: var(--surface-hover); color: var(--text-primary); border-bottom: 1px solid var(--border); padding: 1rem; font-weight: 600; }
     .form-group { margin-bottom: 1rem; }
-    .form-control { width: 100%; padding: 0.75rem; border: 1px solid #e6e2d8; border-radius: 6px; }
-    .btn-primary { background: #5B5BD6; border: none; }
+      .form-group label { color: var(--text-secondary); }
+      .form-control { width: 100%; padding: 0.75rem; background: var(--bg); color: var(--text-primary); border: 1px solid var(--border); border-radius: var(--radius-ui); }
+      .form-control:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 3px var(--accent-subtle); }
+      .btn { border-radius: var(--radius-ui); }
+      .btn-default { background: var(--surface); border-color: var(--border); color: var(--text-primary); }
+      .btn-default:hover, .btn-default:focus { background: var(--surface-hover); border-color: var(--border-strong); color: var(--text-primary); }
+      .btn-primary { background: var(--accent); border-color: var(--accent); }
+      .btn-primary:hover, .btn-primary:focus { background: var(--accent-hover); border-color: var(--accent-hover); }
     .checkbox { display: flex; align-items: center; gap: 0.5rem; }
+      .text-muted { color: var(--text-tertiary); }
   </style>
 </head>
 <body>
@@ -374,6 +414,7 @@ function renderAdminSettings(settings: Map<string, string>, csrf: string): strin
     <div class="container">
       <a class="navbar-brand" href="/admin">TRX Faucet Admin</a>
       <div class="pull-right">
+          ${renderThemeToggle()}
         <a href="/admin" class="btn btn-default btn-sm">Dashboard</a>
         <a href="/admin/logout" class="btn btn-primary btn-sm">Logout</a>
       </div>
@@ -445,6 +486,7 @@ function renderAdminSettings(settings: Map<string, string>, csrf: string): strin
       <button type="submit" class="btn btn-primary">Save Settings</button>
     </form>
   </div>
+  ${THEME_RUNTIME}
 </body>
 </html>`;
 }

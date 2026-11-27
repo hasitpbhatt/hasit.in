@@ -1,22 +1,31 @@
 /** @type {import('tailwindcss').Config} */
+
+// Canonical colours are hex values from /theme.css, so Tailwind's default
+// `rgb(var(--x) / <alpha>)` opacity syntax produces invalid CSS. Emitting
+// color-mix() instead makes `bg-gain/10` & friends actually work.
+const token = (name) => ({ opacityValue }) =>
+  opacityValue === undefined
+    ? `var(${name})`
+    : `color-mix(in srgb, var(${name}) calc(${opacityValue} * 100%), transparent)`;
+
 export default {
   content: ['./index.html', './src/**/*.{ts,tsx}'],
   theme: {
     extend: {
       colors: {
-        bg: 'var(--bg)',
-        surface: 'var(--surface)',
-        'surface-2': 'var(--surface-2)',
-        line: 'var(--border)',
-        content: 'var(--text)',
-        muted: 'var(--text-muted)',
+        bg: token('--bg'),
+        surface: token('--surface'),
+        'surface-2': token('--surface-2'),
+        line: token('--border'),
+        content: token('--text-primary'),
+        muted: token('--text-secondary'),
         accent: {
-          DEFAULT: 'var(--accent)',
-          hover: 'var(--accent-hover)',
+          DEFAULT: token('--accent'),
+          hover: token('--accent-hover'),
         },
-        gain: 'var(--green)',
-        loss: 'var(--red)',
-        warn: 'var(--amber)',
+        gain: token('--success'),
+        loss: token('--danger'),
+        warn: token('--warning'),
       },
       fontFamily: {
         sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
