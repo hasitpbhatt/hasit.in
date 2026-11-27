@@ -19,9 +19,9 @@ export const trx = {
   },
 
   claimlog: {
-    insert: (db: D1Database, data: { address: string; ip: string; reward: number; shortlink?: string }) =>
-      db.prepare('INSERT INTO trx_claimlog (address, ip, time, reward, shortlink) VALUES (?, ?, unixepoch(), ?, ?)')
-        .bind(data.address, data.ip, data.reward, data.shortlink ?? '').run(),
+    insert: (db: D1Database, data: { address: string; ip: string; reward: number }) =>
+      db.prepare('INSERT INTO trx_claimlog (address, ip, time, reward) VALUES (?, ?, unixepoch(), ?)')
+        .bind(data.address, data.ip, data.reward).run(),
     recent: (db: D1Database, limit = 10) =>
       db.prepare('SELECT address, time, reward FROM trx_claimlog WHERE address != \'\' ORDER BY id DESC LIMIT ?')
         .bind(limit).all(),

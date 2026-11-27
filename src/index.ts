@@ -10,7 +10,7 @@ import { blogApp } from './apps/blog';
 import { quizApp } from './apps/quiz';
 import { gamesApp } from './apps/games';
 import { authRoutes } from './lib/auth/routes';
-import { isLocalHostname, resolveAppKey, resolveSpaAssetPaths, type AppKey } from './lib/host-routing';
+import { isLocalHostname, resolveAppKey, resolvePathMount, resolveSpaAssetPaths, type AppKey } from './lib/host-routing';
 import { securityHeadersMiddleware } from './middleware/security-headers';
 
 type AppEnv = { Bindings: Env };
@@ -86,12 +86,22 @@ app.all('*', async (c) => {
     return authRoutes.fetch(forwarded, env, c.executionCtx);
   }
 
+  // The quiz zone rewrites quiz.hasit.in/<path> to hasit.in/quiz/<path>, so the
+  // Worker sees the root host. Recover the original app and path before routing
+  // so both the SPA shell and the /api/ai endpoint keep working.
+  const pathMount = resolvePathMount(effectiveHostname, url.pathname);
+
   const appKey =
-      devApp !== null && devApp in APP_ROUTES ? devApp : resolveAppKey(effectiveHostname, local);
+      devApp !== null && devApp in APP_ROUTES
+        ? devApp
+        : pathMount?.appKey ?? resolveAppKey(effectiveHostname, local);
+
+  // Paths are matched against the browser-facing path, minus any mount prefix.
+  const pathname = pathMount ? pathMount.pathname : url.pathname;
 
   const isPageRequest = request.method === 'GET' || request.method === 'HEAD';
-  if (isPageRequest && !isApiPath(url.pathname)) {
-    for (const assetPath of resolveSpaAssetPaths(appKey, url.pathname)) {
+  if (isPageRequest && !isApiPath(pathname)) {
+    for (const assetPath of resolveSpaAssetPaths(appKey, pathname)) {
       const assetUrl = new URL(request.url);
       assetUrl.pathname = assetPath;
       const spaResponse = await env.ASSETS.fetch(new Request(assetUrl, request));
@@ -114,7 +124,15 @@ app.all('*', async (c) => {
   headers.set('X-Hasit-Host', effectiveHostname);
   headers.set('X-Hasit-App', appKey);
 
-  const response = await subApp.fetch(new Request(request, { headers }), env, c.executionCtx);
+  const appRequest = pathMount
+    ? new Request(new URL(pathname + url.search, url), {
+        method: request.method,
+        headers,
+        body: request.body,
+      })
+    : new Request(request, { headers });
+
+  const response = await subApp.fetch(appRequest, env, c.executionCtx);
 
   // If the app returns 404, try serving from static Assets binding
   // (for custom domains where Assets binding isn't automatic)

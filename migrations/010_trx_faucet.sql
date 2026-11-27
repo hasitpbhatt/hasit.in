@@ -12,8 +12,7 @@ CREATE TABLE IF NOT EXISTS trx_claimlog (
     address         TEXT NOT NULL,
     ip              TEXT NOT NULL,
     time            INTEGER NOT NULL,
-    reward          INTEGER NOT NULL,              -- in sun (1 TRX = 1,000,000 sun)
-    shortlink       TEXT DEFAULT ''
+    reward          INTEGER NOT NULL               -- in sun (1 TRX = 1,000,000 sun)
 );
 CREATE INDEX IF NOT EXISTS idx_trx_claimlog_address ON trx_claimlog(address);
 CREATE INDEX IF NOT EXISTS idx_trx_claimlog_ip ON trx_claimlog(ip);

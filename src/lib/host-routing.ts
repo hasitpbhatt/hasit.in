@@ -86,6 +86,37 @@ export function resolveSpaAssetPaths(appKey: AppKey, pathname: string): string[]
   return [`${root}index.html`];
 }
 
+/**
+ * Apps that are also reachable under /<app>/ on the root domain.
+ *
+ * The quiz zone has a URL rewrite rule that maps quiz.hasit.in/<path> to
+ * hasit.in/quiz/<path> before the Worker runs, so those requests arrive on the
+ * root hostname and would otherwise be routed to the portfolio. Mounting the
+ * app at its own prefix recovers the original request.
+ */
+const PATH_MOUNTED_APPS: Record<string, AppKey> = {
+  quiz: 'quiz',
+};
+
+/**
+ * Detect a path-mounted app on the root domain and strip the mount prefix.
+ * Returns null when the host or first segment is not a mount point.
+ */
+export function resolvePathMount(
+  hostname: string,
+  pathname: string,
+): { appKey: AppKey; pathname: string } | null {
+  const h = hostname.toLowerCase().replace(/:\d+$/, '');
+  if (h !== ROOT_DOMAIN && h !== `www.${ROOT_DOMAIN}`) return null;
+
+  const segment = pathname.split('/').filter(Boolean)[0];
+  const appKey = segment ? PATH_MOUNTED_APPS[segment] : undefined;
+  if (!appKey) return null;
+
+  const rest = pathname.slice(segment.length + 1);
+  return { appKey, pathname: rest.startsWith('/') ? rest : `/${rest}` };
+}
+
 /** True for localhost / loopback hostnames. */
 export function isLocalHostname(hostname: string): boolean {
   const h = hostname.toLowerCase().replace(/:\d+$/, '');

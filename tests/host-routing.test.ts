@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { getSpaAssetRoot, resolveAppKey, resolveSpaAssetPaths, isLocalHostname } from '../src/lib/host-routing.ts';
+import { getSpaAssetRoot, resolveAppKey, resolvePathMount, resolveSpaAssetPaths, isLocalHostname } from '../src/lib/host-routing.ts';
 
 test('root domain serves the portfolio', () => {
   assert.equal(resolveAppKey('hasit.in'), '');
@@ -64,4 +64,24 @@ test('SPA hosts use private asset roots and resolve clean browser paths', () => 
   assert.deepEqual(resolveSpaAssetPaths('freellm', '/r/test123'), ['/_spa/freellm/index.html']);
   assert.deepEqual(resolveSpaAssetPaths('freellm', '/assets/index-abc.js'), ['/_spa/freellm/assets/index-abc.js']);
   assert.deepEqual(resolveSpaAssetPaths('fitness', '/gu/workouts/'), ['/_spa/fitness/gu/workouts/index.html']);
+});
+
+test('the quiz zone rewrite is recovered from the root path prefix', () => {
+  assert.deepEqual(resolvePathMount('hasit.in', '/quiz'), { appKey: 'quiz', pathname: '/' });
+  assert.deepEqual(resolvePathMount('hasit.in', '/quiz/'), { appKey: 'quiz', pathname: '/' });
+  assert.deepEqual(resolvePathMount('hasit.in', '/quiz/lib/state.js'), {
+    appKey: 'quiz',
+    pathname: '/lib/state.js',
+  });
+  assert.deepEqual(resolvePathMount('www.hasit.in', '/quiz/api/ai'), {
+    appKey: 'quiz',
+    pathname: '/api/ai',
+  });
+});
+
+test('path mounts do not hijack other hosts or prefixes', () => {
+  assert.equal(resolvePathMount('games.hasit.in', '/quiz'), null);
+  assert.equal(resolvePathMount('hasit.in', '/quizzes'), null);
+  assert.equal(resolvePathMount('hasit.in', '/'), null);
+  assert.equal(resolvePathMount('hasit.in', '/books/x.html'), null);
 });

@@ -71,9 +71,6 @@ portfolioApp.get('/', (c) => {
             <a href="https://trx.hasit.in" class="nav-dropdown-item" role="menuitem"><span class="nav-dropdown-icon">💰</span><span>TRX Faucet</span></a>
             <a href="https://freellm.hasit.in" class="nav-dropdown-item" role="menuitem"><span class="nav-dropdown-icon">🔑</span><span>FreeLLM</span></a>
             <a href="https://fitness.hasit.in" class="nav-dropdown-item" role="menuitem"><span class="nav-dropdown-icon">💪</span><span>Fitness</span></a>
-            <a href="https://finance.hasit.in" class="nav-dropdown-item" role="menuitem"><span class="nav-dropdown-icon">📊</span><span>Finance</span></a>
-            <a href="https://games.hasit.in" class="nav-dropdown-item" role="menuitem"><span class="nav-dropdown-icon">🎮</span><span>Games</span></a>
-            <a href="https://quiz.hasit.in" class="nav-dropdown-item" role="menuitem"><span class="nav-dropdown-icon">📚</span><span>Quiz</span></a>
             <a href="https://quizify.hasit.in" class="nav-dropdown-item" role="menuitem"><span class="nav-dropdown-icon">⚡</span><span>Quizify</span></a>
             <a href="https://airgap.hasit.in" class="nav-dropdown-item" role="menuitem"><span class="nav-dropdown-icon">🛡️</span><span>Airgap</span></a>
             <a href="https://devcheap.click" class="nav-dropdown-item" role="menuitem"><span class="nav-dropdown-icon">💰</span><span>DevCheap</span></a>
@@ -107,7 +104,6 @@ portfolioApp.get('/', (c) => {
       <div class="hero-actions">
         <a href="books/what-is-a-man-fixing.html" class="btn btn-primary">Read What Is a Man Fixing? →</a>
         <a href="https://blog.hasit.in" class="btn btn-secondary">Read My Thoughts →</a>
-        <a href="https://quiz.hasit.in" class="btn btn-secondary">Try Interactive Quizzes</a>
       </div>
     </div>
   </header>
@@ -224,13 +220,6 @@ portfolioApp.get('/', (c) => {
             <h3>What Is a Man Fixing?</h3>
             <p>A short philosophical fable: a man who has spent his life being the most capable person in the room goes to his dead uncle's dark lighthouse, and finds a notebook with almost nothing in it. 21,000 words, and the question is never answered. Read free in the browser, built for a phone.</p>
             <a href="books/what-is-a-man-fixing.html" class="project-link" onclick="event.stopPropagation()">Read the Book →</a>
-          </div>
-
-          <div class="project-card" onclick="window.location.href='https://quiz.hasit.in'">
-            <div class="project-icon" aria-hidden="true">📚</div>
-            <h3>Quiz Platform</h3>
-            <p>My playful take on learning: multiple choice, timed quizzes on non-fiction books designed to feel like you've absorbed the knowledge without the time commitment.</p>
-            <a href="https://quiz.hasit.in" class="project-link" onclick="event.stopPropagation()">Try It Out →</a>
           </div>
 
           <div class="project-card" onclick="window.open('https://instagram.com/hasit_bhatt', '_blank')">

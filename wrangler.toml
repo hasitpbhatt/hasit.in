@@ -42,6 +42,9 @@ not_found_handling = "none"
 # /_spa/* and /apps/* must reach the Worker so isPrivatePath() can 404 them.
 # Without these entries the asset layer serves the staged build output
 # directly, exposing the private prefix the Worker rewrites to.
+# /quiz/* must reach the Worker because the quiz zone URL rewrite sends
+# quiz.hasit.in/* to hasit.in/quiz/*; the Worker recovers the app from the
+# prefix (see resolvePathMount).
 run_worker_first = [
   "/",
   "/api/*",
@@ -51,6 +54,7 @@ run_worker_first = [
   "/admin/*",
   "/_spa/*",
   "/apps/*",
+  "/quiz/*",
 ]
 
 [[d1_databases]]
