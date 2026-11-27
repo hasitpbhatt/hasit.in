@@ -83,22 +83,30 @@ async function buildFreeLlm() {
 
 function generateSitemap() {
   const BASE_URL = 'https://hasit.in';
+
+  // Only list URLs that actually resolve. Notably absent:
+  //  - www: duplicate of the canonical root
+  //  - trx: legacy static faucet, serves / only and 404s on every app route
+  //  - auth: API-only broker, no browsable pages
+  //  - trx2 /claim and /p: the claim form lives at /, and /p requires a slug
   const SUBDOMAINS = [
-    { subdomain: 'www', paths: ['/'] },
-    { subdomain: 'trx', paths: ['/', '/claim', '/admin', '/p'] },
-    { subdomain: 'trx2', paths: ['/', '/claim', '/admin', '/p'] },
+    { subdomain: '', paths: ['/'], priority: '1.0' },
+    { subdomain: 'trx2', paths: ['/'] },
     { subdomain: 'freellm', paths: ['/', '/chat', '/keys', '/models', '/settings'] },
-    { subdomain: 'auth', paths: ['/', '/login', '/callback'] },
-    { subdomain: '', paths: ['/'] },
+    { subdomain: 'fitness', paths: ['/'] },
+    { subdomain: 'quizify', paths: ['/'] },
+    { subdomain: 'blog', paths: ['/'] },
   ];
 
   const urls = [];
-  urls.push(`${BASE_URL}/`);
+  const priorities = new Map();
 
   for (const sub of SUBDOMAINS) {
     const subdomainUrl = sub.subdomain ? `https://${sub.subdomain}.hasit.in` : BASE_URL;
     for (const p of sub.paths) {
-      urls.push(`${subdomainUrl}${p}`);
+      const url = `${subdomainUrl}${p}`;
+      urls.push(url);
+      priorities.set(url, sub.priority ?? '0.8');
     }
   }
 
@@ -108,7 +116,7 @@ function generateSitemap() {
     <loc>${url}</loc>
     <lastmod>${now}</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>${url === BASE_URL + '/' ? '1.0' : '0.8'}</priority>
+    <priority>${priorities.get(url)}</priority>
   </url>`).join('\n');
 
   return `<?xml version="1.0" encoding="UTF-8"?>
