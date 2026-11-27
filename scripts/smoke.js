@@ -168,6 +168,17 @@ for (const path of ['/', '/chat', '/r/test123']) {
   });
 }
 
+// A 307 to /_spa/... means the asset layer redirected the shell fetch instead
+// of returning it. That leaks the private prefix and leaves the app blank.
+for (const host of ['freellm.hasit.in', 'games.hasit.in']) {
+  await check(`GET / on ${host} never redirects into /_spa/`, async () => {
+    const { response } = await request('/', host);
+    assert(response.status === 200, `status ${response.status}`);
+    assert(!response.headers.get('location'), `redirected to ${response.headers.get('location')}`);
+    assert(!(response.headers.get('location') || '').includes('/_spa/'), 'leaked the private asset root');
+  });
+}
+
 for (const path of ['/apps', '/apps/freellm/chat', '/_spa/freellm/index.html']) {
   await check(`GET ${path} is not publicly exposed`, async () => {
     const { response } = await request(path, 'freellm.hasit.in');
@@ -189,7 +200,7 @@ await check('GET /ads.txt is served', async () => {
 });
 
 await check('GET /books/what-is-a-man-fixing.html is served', async () => {
-  // Static assets redirect .html to the clean URL on purpose.
+  // html_handling = "none" serves .html files directly, so no redirect here.
   const { response, text } = await request('/books/what-is-a-man-fixing.html', 'hasit.in', {
     redirect: 'follow',
   });
