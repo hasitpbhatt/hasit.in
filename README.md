@@ -1,196 +1,236 @@
 # hasit.in — Unified Monorepo
 
-The repository is being consolidated behind one Cloudflare Worker and Assets binding. FreeLLM, Fitness, Quiz, Games, and Finance are staged through the shared Assets pipeline; the Worker also mounts FreeLLM's API handlers and routes their expiring session/OAuth/rate-limit state through D1. Production deployment, D1 changes, DNS cutover, and legacy-service removal have not been performed.
-
-`trx.hasit.in` and `blog.hasit.in` are handled by the hostname router but remain absent from `wrangler.toml` pending ownership checks. FreeLLM's current upstream schema still needs reconciliation with the root legacy FreeLLM migration before any D1 migration or production use. Interview stays on its separate Cloudflare Pages Next.js SSR deployment; its own plan retains Pages-local D1/password auth, so it is not routed through this Worker's Google OAuth service.
+One Cloudflare Worker serves every subdomain of `hasit.in`. The Worker handles hostname
+routing, API endpoints, and server-rendered pages; static assets for the SPAs are served from
+the same deployment through the `ASSETS` binding. There is a single D1 database (`hasit-in`)
+holding all app data behind per-app table prefixes.
 
 ## Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                    hasit-in (single Worker)                  │
-├─────────────────────────────────────────────────────────────┤
-│  Host Router (src/index.ts) routes by hostname:            │
-│  • hasit.in, www.hasit.in → Personal portfolio              │
-│  • trx.hasit.in, trx2.hasit.in → TRX Faucet                │
-│  • freellm.hasit.in    → LLM API Validator                  │
-│  • fitness.hasit.in    → Workout Tracker                    │
-│  • finance.hasit.in    → Finance research app                │
-│  • blog.hasit.in       → Blog/Articles                      │
-│  • quiz.hasit.in       → Quiz Platform + AI proxy            │
-│  • games.hasit.in      → Browser Games + API                 │
-│  • auth.hasit.in       → Shared OAuth + JWT                 │
-├─────────────────────────────────────────────────────────────┤
-│  Cloudflare static assets (public/) served directly         │
-├─────────────────────────────────────────────────────────────┤
-│                     Single D1 Database (hasit-in)           │
-│                     Table prefixes: core_, trx_, freellm_,  │
-│                     fitness_, finance_, blog_, quiz_,       │
-│                     games_, analytics_                     │
-└─────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────┐
+│                     hasit-in (single Worker)                  │
+├──────────────────────────────────────────────────────────────┤
+│  Host router (src/lib/host-routing.ts) resolves the app from  │
+│  the request hostname:                                        │
+│    hasit.in, www.hasit.in  → portfolio (server-rendered)      │
+│    trx2.hasit.in           → TRX faucet (server-rendered)     │
+│    freellm.hasit.in        → FreeLLM (SPA + Worker API)       │
+│    fitness.hasit.in        → reverse proxy to the fitness app │
+│    auth.hasit.in           → shared OAuth / JWT broker (API)  │
+├──────────────────────────────────────────────────────────────┤
+│  Static assets (public/, public/_spa/) served by ASSETS       │
+├──────────────────────────────────────────────────────────────┤
+│  D1 (hasit-in) with prefixes: core_, trx_, freellm_, fitness_,│
+│  blog_, analytics_                                            │
+├──────────────────────────────────────────────────────────────┤
+│  Durable Objects: AuthState (sessions), RateLimiter           │
+└──────────────────────────────────────────────────────────────┘
 ```
 
-This is a Cloudflare Worker deployment, not a Cloudflare Pages project. The Worker is configured in `wrangler.toml` and deployed with `wrangler deploy` (or `npm run deploy`).
+This is a Worker deployment, not a Pages project. It is configured in `wrangler.toml` and
+released with `wrangler deploy`.
+
+> **Deploy hazard.** `wrangler deploy` reconciles the account's Worker custom domains against
+> the `routes` array and **deletes** any custom domain that is not listed, which also removes
+> its DNS record. Every hostname must stay in `wrangler.toml`. Verify all six are bound after
+> each deploy.
 
 ## Quick Start
 
 ```bash
-# Install dependencies
-npm install
+npm ci
+npm run check:config      # validate public config and ads.txt
+npm run dev:keys          # generate local ES256 keys into .dev.vars
+npm run dev               # http://localhost:8787
 
-# Validate public configuration and ads.txt
-npm run check:config
-
-# Run migrations against the local D1 database
-npm run db:migrate
-
-# Generate local JWT keys (writes .dev.vars)
-npm run dev:keys
-
-# Develop locally at http://localhost:8787
-npm run dev
-
-# Deploy the Worker
-npm run deploy
+npm run deploy            # check:config → typecheck → test → build:apps → wrangler deploy
+npm run deploy:dry        # same checks, bundle only
 ```
 
 ## Project Structure
 
 ```
 hasit.in/
-├── apps/                         # Imported SPA/application source
-│   ├── fitness/
-│   ├── freellm/                    # AGPL-3.0 app source and upstream schema history
-│   ├── finance/
-│   ├── games/
-│   └── quiz/
+├── apps/freellm/                # FreeLLM app source (AGPL-3.0) and upstream schema
 ├── src/
-│   ├── index.ts                 # Host router (routes by hostname)
+│   ├── index.ts                 # Worker entry: host routing, security headers
+│   ├── env.ts                   # Environment bindings and vars
 │   ├── apps/
-│   │   ├── trx/                 # TRX Faucet
-│   │   ├── portfolio/           # Personal portfolio (hasit.in)
-│   │   ├── freellm/             # FreeLLM API mount and D1-backed expiring state
-│   │   ├── fitness/             # Fitness host and health routes
-│   │   ├── finance/             # Finance API handlers
-│   │   ├── blog/                # Blog (stub)
-│   │   ├── quiz/                # Quiz AI proxy
-│   │   └── games/               # Games Pages API adapter
+│   │   ├── portfolio/           # hasit.in and www.hasit.in
+│   │   ├── trx/                 # TRX faucet (claim, admin, api, user page, templates)
+│   │   ├── freellm/             # FreeLLM API mount
+│   │   ├── fitness/             # Thin pass-through to the fitness app
+│   │   └── blog/                # Blog stub (JSON only)
 │   ├── lib/
-│   │   ├── auth/                # Shared auth: JWT, Google OAuth, sessions
-│   │   ├── db/
-│   │   │   ├── queries.ts       # Typed query helpers for non-TRX apps
-│   │   │   └── trx-queries.ts   # TRX faucet query helpers
-│   │   ├── site-config.ts       # GA4, AdSense, and Turnstile site config
-│   │   ├── html.ts              # HTML escaping helper
-│   │   ├── faucetpay.ts         # FaucetPay client
-│   │   ├── coingecko.ts         # CoinGecko cache (Cache API; no per-request KV)
-│   │   └── validator.ts         # Address validation, Turnstile, rate limits
+│   │   ├── auth/                # JWT, Google OAuth, sessions, auth broker routes
+│   │   ├── db/                  # queries.ts (non-TRX), trx-queries.ts
+│   │   ├── host-routing.ts      # Hostname → app key, SPA asset roots
+│   │   ├── trx-host.ts          # Faucet host resolution (trx2 today, trx later)
+│   │   ├── fitness-proxy.ts     # Request/response forwarding for fitness
+│   │   ├── theme.ts             # Theme bootstrap and toggle markup
+│   │   ├── site-config.ts       # GA4, AdSense, Turnstile config
+│   │   ├── ui-components.ts     # Shared page chrome
+│   │   ├── quotes.ts            # Author page nav and quote-of-day
+│   │   ├── cmc-widget.ts        # Coinmarketcap widget and footer links
+│   │   ├── coingecko.ts         # CoinGecko client (Cache API backing)
+│   │   ├── faucetpay.ts         # FaucetPay payouts
+│   │   ├── streak.ts            # Daily claim streaks
+│   │   ├── validator.ts         # Address validation, Turnstile, bans
+│   │   └── html.ts              # Escaping helper
 │   └── middleware/
-│       ├── rate-limit.ts        # Per-app rate limiting (Durable Object)
-│       ├── security.ts          # VPN/proxy checks, ban lists
+│       ├── rate-limit.ts        # Per-key fixed-window limiting (Durable Object)
+│       ├── security.ts          # IP/country/ASN bans, VPN/proxy detection
+│       ├── security-headers.ts  # CSP, HSTS, Permissions-Policy
 │       └── session.ts           # Claim/admin sessions, CSRF, flash
 ├── migrations/                  # Numbered SQL migrations
-├── public/                      # Static assets served by Cloudflare
-├── scripts/build-apps.js        # Builds/stages available SPAs
-├── scripts/migrate.js           # Migration runner
-├── wrangler.toml                # Worker, D1, Durable Objects, Assets, and vars
-└── package.json
+├── public/                      # Static assets (theme.css, theme.js, og.png, …)
+│   └── _spa/                    # Built SPA bundles (freellm)
+├── scripts/
+│   ├── build-apps.js            # Builds SPAs, copies shared theme, writes sitemap
+│   ├── generate-sitemap.js      # Standalone sitemap generator (keep in sync)
+│   ├── check-config.js          # Validates public vars and ads.txt
+│   ├── dev-keys.js              # Writes local ES256 keys to .dev.vars
+│   ├── migrate.js               # Migration runner (--local / --remote)
+│   └── smoke.js                 # Endpoint matrix against a running dev server
+├── tests/                       # node --test suites
+└── wrangler.toml
 ```
 
-## Static Assets
+## Subdomains
 
-Run `npm run build:apps` to build FreeLLM, Games, and Fitness and stage the available Finance and Quiz static files under `public/apps/`. Cloudflare serves those files through the `[assets]` binding; the Worker redirects each SPA host root to its app directory. FreeLLM's BrowserRouter base and deep links are scoped under `/apps/freellm/`. `public/_headers` controls cache headers and other response headers.
+| Hostname | App | Served by |
+|----------|-----|-----------|
+| `hasit.in`, `www.hasit.in` | Portfolio | Worker (server-rendered) |
+| `trx2.hasit.in` | TRX Faucet | Worker (server-rendered) |
+| `freellm.hasit.in` | FreeLLM | Worker API + SPA in `public/_spa/freellm/` |
+| `fitness.hasit.in` | Fitness | Worker reverse proxy → `FITNESS_ORIGIN` |
+| `auth.hasit.in` | Auth broker | Worker, **API only** (no browsable UI) |
+| `quizify.hasit.in`, `blog.hasit.in` | Separate Pages projects | Not this Worker |
 
-## Database (Single D1: `hasit-in`)
+`trx.hasit.in` is a **legacy Pages project** (`trx-hasit-in`), not a route of this Worker. Do not
+add it to `wrangler.toml` until it has been detached from that Pages project; the faucet host
+will move from `trx2` to `trx` once parity is reached.
+
+## Hostname-resolution rule
+
+Never hardcode a hostname literal in a template. Derive it from the request so the app keeps
+working when a hostname moves:
+
+```ts
+import { resolveTrxHost, resolveTrxOrigin } from './lib/trx-host';
+
+const host = resolveTrxHost(request);    // allowlisted, falls back to trx2.hasit.in
+const origin = resolveTrxOrigin(request); // `https://${host}`
+```
+
+`TRX_PUBLIC_ORIGIN` is the single accepted literal, used only by the static portfolio page.
+`tests/trx-host.test.ts` covers the allowlist, port stripping, and spoofed `X-Hasit-Host`.
+
+## Static Assets and the Shared Theme
+
+`npm run build:apps` builds FreeLLM with Vite and stages it under `public/_spa/freellm/`. It also
+copies the shared design system into each SPA output and regenerates `public/sitemap.xml`.
+
+Every app shares one visual language from `public/theme.css`:
+
+- Light and dark token sets selected by `html.light-theme` / `html.dark-theme`, with a
+  `prefers-color-scheme` fallback.
+- The same font stack (Inter for UI, JetBrains Mono for code) and the same accent
+  (`#5B5BD6` light, `#7C7CE6` dark).
+- One toggle contract: `<button class="theme-toggle" data-theme-toggle>` containing exactly two
+  `<svg>` children, `.icon-sun` and `.icon-moon`.
+
+`public/theme.js` handles clicks through a single document-level delegated listener. Do not add
+an `onClick` to a `[data-theme-toggle]` element — a second handler cancels the toggle out.
+
+`public/_headers` controls cache and response headers for static files.
+
+## Database (single D1: `hasit-in`)
 
 | Prefix | Tables | Purpose |
 |--------|--------|---------|
 | `core_` | `users`, `user_apps`, `sessions` | Shared identity and auth |
-| `trx_` | `settings`, `claimlog`, `ips`, `addresses`, `refs`, `pages`, `locks`, `ProxyCheck`, `NH_Log` | TRX Faucet and security checks |
-| `freellm_` | FreeLLM user, auth, usage, key, and service tables; `runtime_state` | FreeLLM API and expiring runtime state |
-| `fitness_` | `workouts`, `goals`, `streaks` | Fitness Tracker |
-| `finance_` | `portfolios`, `holdings`, `transactions` | Finance Tracker |
-| `quiz_` | `quizzes`, `questions`, `attempts` | Quiz Platform |
+| `trx_` | `settings`, `claimlog`, `ips`, `addresses`, `refs`, `pages`, `locks`, `ProxyCheck`, `NH_Log`, `streaks` | Faucet state and security checks |
+| `freellm_` | User, auth, usage, key, and service tables; `runtime_state` | FreeLLM API and expiring runtime state |
+| `fitness_` | `workouts`, `goals`, `streaks` | Fitness tracker |
 | `blog_` | `posts`, `tags`, `post_tags` | Blog |
-| `games_` | Users, sessions, score events, payouts, promos, rate limits | Games |
 | `analytics_` | `events` | Cross-app analytics |
 
-The table names in this table are suffixes of their prefix; for example, `core_users` and `analytics_events`. Root migration `002_freellm.sql` is a legacy schema and conflicts with FreeLLM's current upstream migration history; reconcile the actual D1 schema before applying either schema chain. Migration `012_freellm_runtime_state.sql` creates the D1-backed session/OAuth/rate-limit store but has not been applied to production. Games' imported Pages handlers rewrite their supported generic table names to `games_*`; migration `011_games_platform.sql` also remains unapplied to production. Finance currently serves read-only market-data APIs; its planned `finance_*` persistence is not wired to the imported app.
+Table names above are suffixes of their prefix (`core_users`, `analytics_events`, …).
+`trx_claimlog` intentionally has **no** shortlink column; shortlinks were removed.
 
 ### Migrations
 
 | Migration | Contents |
 |-----------|----------|
 | `001_core_auth.sql` | Core authentication tables |
-| `002_freellm.sql` | Legacy FreeLLM tables; conflicts with the current upstream schema |
+| `002_freellm.sql` | Legacy FreeLLM tables |
 | `003_fitness.sql` | Fitness tables |
-| `004_finance.sql` | Finance tables |
-| `005_quiz.sql` | Quiz tables |
 | `006_blog.sql` | Blog tables |
-| `007_games.sql` | Games tables |
-| `009_analytics.sql` | Cross-app analytics table |
-| `010_trx_faucet.sql` | TRX faucet tables; idempotent, and creates or ensures the TRX tables including `trx_ProxyCheck` and `trx_NH_Log` required by the security middleware |
-| `011_games_platform.sql` | Prefixed tables used by the imported Games Pages handlers |
-| `012_freellm_runtime_state.sql` | D1-backed expiring FreeLLM sessions, OAuth state, and rate-limit counters |
-
-The root migration runner does not apply the upstream FreeLLM schema chain in `apps/freellm/migrations/`. Run the root migrations locally only after reviewing the schema conflict. Do not run remote migrations until the existing D1 schema has been inventoried and a data-preserving plan is explicitly approved.
+| `009_analytics.sql` | Cross-app analytics |
+| `010_trx_faucet.sql` | Faucet tables (idempotent; includes `ProxyCheck` and `NH_Log`) |
+| `011_trx_streaks.sql` | Daily claim streaks |
+| `012_freellm_runtime_state.sql` | D1-backed FreeLLM sessions, OAuth state, rate-limit counters |
 
 ```bash
-# Local
-npm run db:migrate
-
-# Production migrations are intentionally gated; do not run remotely yet.
+npm run db:migrate:local    # local D1
+npm run db:migrate:remote   # remote D1
 ```
+
+Applying a migration runs the whole numbered chain, so review new files before running it.
+Migrations are not applied automatically on deploy.
 
 ## Authentication
 
-FreeLLM retains its own account/session model. Configure `ENCRYPTION_KEY` for its key vault and `RESEND_API_KEY` for verification email; Google OAuth must allow `https://freellm.hasit.in/api/auth/google/callback`. The `freellm_runtime_state` migration must be applied before using those API flows.
+`auth.hasit.in` is the shared broker and exposes only JSON endpoints: `/login/:app`,
+`/callback`, `/exchange`, `/refresh/:app`, `/revoke/:app`, `/me`, and `/health`. It issues scoped
+ES256 JWTs (15-minute access tokens, 30-day refresh tokens) that apps validate locally, with a
+per-app revocation path. There is no sign-in page on that host.
 
-The `auth.hasit.in` Durable Object handles:
-- Google OAuth callback
-- Scoped JWT issuance (15-minute access tokens, 30-day refresh tokens)
-- Per-app token revocation
-- Local JWT validation in apps (no network hop)
+The TRX faucet is unauthenticated by design and does not use Google sign-in; it relies on
+Turnstile plus its own claim session. FreeLLM keeps its own account model and needs
+`ENCRYPTION_KEY` for its key vault and `RESEND_API_KEY` for verification mail, with Google OAuth
+allowing `https://freellm.hasit.in/api/auth/google/callback`.
 
-Each app receives `Authorization: Bearer <jwt>` with `app` and `scope` claims.
+## Fitness proxy
 
-## Public Configuration
+`fitness.hasit.in` is served by a separate app. The Worker forwards the request to
+`FITNESS_ORIGIN` unchanged (`src/lib/fitness-proxy.ts`) and returns the response as-is: the
+upstream app owns its cookies, redirects, and SPA fallback. `securityHeadersMiddleware()`
+deliberately skips fitness so its own CSP and `Permissions-Policy` (which must keep
+`camera=(self)`) survive.
 
-The following values are public Worker variables in `wrangler.toml` under `[vars]`:
+## Configuration
+
+Public values in `wrangler.toml` under `[vars]`:
 
 | Variable | Purpose |
 |----------|---------|
 | `ENVIRONMENT` | Runtime environment name |
 | `GA_ID` | GA4 measurement ID |
-| `ADSENSE_CLIENT` | Google AdSense client ID |
-| `TURNSTILE_SITE_KEY` | Cloudflare Turnstile site key |
+| `ADSENSE_CLIENT` | AdSense publisher ID |
+| `TURNSTILE_SITE_KEY` | Turnstile site key |
 | `GOOGLE_CLIENT_ID` | Google OAuth client ID |
-| `GOOGLE_REDIRECT_URI` | Google OAuth callback URL |
+| `GOOGLE_REDIRECT_URI` | OAuth callback (`https://auth.hasit.in/callback`) |
+| `FITNESS_ORIGIN` | Upstream origin for the fitness proxy |
 
-GA4 and AdSense identifiers are not hardcoded in page templates. `src/lib/site-config.ts` reads them from the Worker environment through `getSiteConfig(env)`, and templates use the provided rendering helpers. `public/ads.txt` advertises the AdSense publisher and is validated against `ADSENSE_CLIENT` by `npm run check:config`.
+`npm run check:config` asserts these are well-formed and that `public/ads.txt` matches
+`ADSENSE_CLIENT`. GA4 and AdSense IDs are read through `getSiteConfig(env)` and are never
+hardcoded in templates.
 
-`GOOGLE_CLIENT_SECRET` is a secret and must not be placed in `[vars]`.
-
-## Required Secrets (set via `wrangler secret put`)
+### Secrets (`wrangler secret put`)
 
 | Secret | Purpose |
 |--------|---------|
-| `TURNSTILE_SECRET` | Cloudflare Turnstile verification |
-| `FAUCETPAY_API_KEY` | FaucetPay API key |
-| `FAUCETPAY_USER_TOKEN` | FaucetPay user token |
-| `JWT_PRIVATE_KEY` | ES256 PEM private key |
-| `JWT_PUBLIC_KEY` | ES256 PEM public key |
-| `GOOGLE_CLIENT_SECRET` | Google OAuth client secret |
-| `FREELLM_API_KEY` | FreeLLM API key for Quiz AI proxy, Finance research narrative, Games pinpoint |
-| `ADMIN_PASSWORD` | Only needed until the admin password has been stored in `trx_settings`; it bootstraps the first login |
-
-Set each secret with a command such as:
-
-```bash
-wrangler secret put SECRET_NAME
-```
-
-Generate ES256 keys:
+| `TURNSTILE_SECRET` | Turnstile verification |
+| `FAUCETPAY_API_KEY` | Payouts |
+| `JWT_PRIVATE_KEY` / `JWT_PUBLIC_KEY` | ES256 signing (public key derived if absent) |
+| `GOOGLE_CLIENT_SECRET` | Google OAuth |
+| `FREELLM_API_KEY` / `FREELLM_MODEL` | Default FreeLLM upstream |
+| `ENCRYPTION_KEY` | FreeLLM key-vault encryption |
+| `RESEND_API_KEY` | FreeLLM email verification |
+| `ADMIN_PASSWORD` | Bootstraps the first faucet admin login only |
 
 ```bash
 openssl ecparam -name prime256v1 -genkey -noout -out private.pem
@@ -199,74 +239,54 @@ openssl ec -in private.pem -pubout -out public.pem
 
 ## Local Development
 
-`npm run dev` starts Wrangler at `http://localhost:8787`. The TRX faucet is the default local app, and the auth app is also mounted at `/auth/*`.
-
-To exercise another app locally, set the development-only `X-Hasit-Dev-App` header (an empty value selects the portfolio). Miniflare rewrites local request URLs to the first `custom_domain` route, so a `Host` header is not reliable in development. The header is ignored when `ENVIRONMENT` is not `development`.
+`npm run dev` starts Wrangler at `http://localhost:8787`. Miniflare rewrites local request URLs to
+the first `custom_domain` route, so `Host` is unreliable locally; select an app with the
+development-only `X-Hasit-Dev-App` header (empty value selects the portfolio). The header is
+ignored unless `ENVIRONMENT` is `development`.
 
 ```bash
 curl -H "X-Hasit-Dev-App: freellm" http://localhost:8787/health
-curl -H "X-Hasit-Dev-App:" http://localhost:8787/   # portfolio
+curl -H "X-Hasit-Dev-App:" http://localhost:8787/          # portfolio
+node scripts/smoke.js                                      # full endpoint matrix
 ```
-
-`node scripts/smoke.js` exercises the full endpoint matrix against a running `npm run dev`.
-
-Use `npm run dev:keys` to generate a local ES256 key pair in `.dev.vars` before exercising JWT-based flows.
 
 ## npm Scripts
 
 | Script | Purpose |
 |--------|---------|
-| `npm run dev` | Start the local Worker development server |
-| `npm run dev:keys` | Generate local JWT signing keys in `.dev.vars` |
-| `npm run typecheck` | Run strict TypeScript checks without emitting files |
-| `npm test` | Run the Node test runner (`node --test`) |
-| `npm run lint` | Lint TypeScript sources |
-| `npm run check` | Run typecheck, tests, and a deployment dry run |
-| `npm run deploy` | Deploy the Cloudflare Worker with Wrangler |
-| `npm run deploy:dry` | Validate and bundle the Worker without deploying |
-| `npm run db:migrate` | Apply migrations to local D1 |
-| `npm run db:migrate:remote` | Apply migrations to remote D1 |
-| `npm run check:config` | Validate public configuration and `public/ads.txt` |
-| `npm run build:apps` | Build and stage the available SPA assets under `public/apps/` |
+| `npm run dev` | Local Worker (`predev` runs check:config and build:apps) |
+| `npm run dev:keys` | Generate local JWT keys into `.dev.vars` |
+| `npm run typecheck` | Strict `tsc --noEmit` |
+| `npm test` | `node --test tests/*.test.ts` |
+| `npm run lint` | ESLint over `src/` |
+| `npm run check` | typecheck + test + deploy:dry |
+| `npm run deploy` | Full gate then `wrangler deploy` |
+| `npm run deploy:dry` | check:config + build:apps + bundle only |
+| `npm run build:apps` | Build SPAs, copy theme, write sitemap |
+| `npm run db:migrate:local` / `:remote` | Apply migrations |
+| `npm run check:config` | Validate config and ads.txt |
+
+## CI/CD
+
+`.github/workflows/deploy.yml` deploys on push to `main`; `.github/workflows/pr-gate.yml` runs
+typecheck, tests, and `deploy:dry` on pull requests. Migrations need a manual
+`workflow_dispatch` with `run_migrations=true`.
 
 ## Adding a New App
 
-1. Create `src/apps/<app>/index.ts` with a Hono router.
-2. Add tables using an app-specific prefix in a new migration.
-3. Add typed query helpers in `src/lib/db/queries.ts`.
-4. Register the app in `APP_ROUTES` in `src/index.ts` and add its hostname to `wrangler.toml`.
-5. Add rate-limit configuration in `src/middleware/rate-limit.ts`.
-6. Run the migration and deploy with `npm run deploy`.
-
-## Deployment
-
-This repository deploys a Cloudflare Worker, not Cloudflare Pages.
-
-```bash
-# Deploy the Worker
-npm run deploy
-
-# Validate and bundle without deploying
-npm run deploy:dry
-```
-
-## Subdomains
-
-| Hostname | App | Status |
-|----------|-----|--------|
-| `hasit.in`, `www.hasit.in` | Portfolio | ✅ Built |
-| `trx2.hasit.in` | TRX Faucet | ✅ Configured |
-| `trx.hasit.in` | TRX Faucet | ⏸ Route ownership check required |
-| `freellm.hasit.in` | FreeLLM | ✅ SPA and Worker API mounted; D1 schema reconciliation gated |
-| `fitness.hasit.in` | Fitness | ✅ Static build available |
-| `finance.hasit.in` | Finance | ✅ Static app and API routes available |
-| `blog.hasit.in` | Blog | ⏸ Route ownership check required |
-| `quiz.hasit.in` | Quiz | ✅ Static app and AI proxy available |
-| `games.hasit.in` | Games | ✅ Static app and API routes available |
-| `auth.hasit.in` | Auth Durable Object | ✅ Built |
+1. Create `src/apps/<app>/index.ts` exporting a Hono router.
+2. Add tables under a new prefix in a numbered migration.
+3. Add query helpers in `src/lib/db/queries.ts`.
+4. Register the app in `APP_ROUTES` (`src/index.ts`) and `SUBDOMAIN_APPS`
+   (`src/lib/host-routing.ts`).
+5. Add the hostname to `routes` in `wrangler.toml` — omitting it will not 404, it will delete the
+   domain on the next deploy.
+6. Configure rate limits in `src/middleware/rate-limit.ts`.
+7. For an SPA, add a build step to `scripts/build-apps.js`, call `copySharedTheme(output)`, and
+   extend both sitemap generators.
+8. Add tests in `tests/`.
 
 ## License
 
-The imported FreeLLM source is licensed under AGPL-3.0; retain its notices and `apps/freellm/LICENSE` when distributing or operating the integrated application.
-
-MIT
+`apps/freellm/` is licensed AGPL-3.0; keep its notices and `apps/freellm/LICENSE` when
+distributing or operating it. Everything else is MIT.
