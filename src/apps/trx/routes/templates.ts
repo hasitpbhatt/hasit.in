@@ -42,18 +42,18 @@ export interface PayoutRow {
   reward: number;
 }
 
-function renderNav(): string {
+function renderNav(trxOrigin: string): string {
   return `<nav class="nav" role="navigation" aria-label="Hasit.in Network">
   <div class="nav-inner">
     <a href="https://hasit.in" class="nav-logo" aria-label="Hasit.in Home">HB</a>
-    ${renderAuthorNav('https://trx.hasit.in')}
+    ${renderAuthorNav(trxOrigin)}
     <div class="nav-links">
       <a href="https://hasit.in" class="nav-link">Home</a>
       <a href="https://blog.hasit.in" class="nav-link">Blog</a>
       <div class="nav-dropdown">
         <button class="nav-link nav-dropdown-trigger" aria-expanded="false" aria-haspopup="true">Apps ▾</button>
         <div class="nav-dropdown-menu" role="menu">
-          <a href="https://trx.hasit.in" class="nav-dropdown-item" role="menuitem"><span class="nav-dropdown-icon">💰</span><span>TRX Faucet</span></a>
+          <a href="${escapeHtml(trxOrigin)}" class="nav-dropdown-item" role="menuitem"><span class="nav-dropdown-icon">💰</span><span>TRX Faucet</span></a>
           <a href="https://freellm.hasit.in" class="nav-dropdown-item" role="menuitem"><span class="nav-dropdown-icon">🔑</span><span>FreeLLM</span></a>
           <a href="https://fitness.hasit.in" class="nav-dropdown-item" role="menuitem"><span class="nav-dropdown-icon">💪</span><span>Fitness</span></a>
           <a href="https://quizify.hasit.in" class="nav-dropdown-item" role="menuitem"><span class="nav-dropdown-icon">⚡</span><span>Quizify</span></a>
@@ -78,6 +78,15 @@ function renderHead(data: ClaimPageData): string {
   <meta name="keywords" content="trx,tron,trx faucet,tron faucet,free trx,crypto faucet,faucet,payments">
   <meta name="description" content="Claim free TRX on our TRON faucet! Get instant payouts, no fees, and enjoy a seamless experience. Withdraw instantly with Faucetpay!">
   <meta name="referrer" content="no-referrer">
+  <link rel="canonical" href="https://${escapeHtml(data.trxHost)}/">
+  <meta property="og:title" content="Hasit's Tron (TRX) Faucet">
+  <meta property="og:description" content="Claim free TRX on our TRON faucet! Get instant payouts, no fees, and enjoy a seamless experience. Withdraw instantly with Faucetpay!">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Hasit Bhatt">
+  <meta property="og:url" content="https://${escapeHtml(data.trxHost)}/">
+  <meta property="og:image" content="https://hasit.in/og.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://hasit.in/og.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -226,7 +235,7 @@ function renderRecentPayouts(payouts: PayoutRow[]): string {
 }
 
 function renderFooter(data: ClaimPageData): string {
-  return `${renderFaucetFooterLinks()}
+  return `${renderFaucetFooterLinks(`https://${data.trxHost}`)}
 
 ${renderAdSlot(data.site, 'ad-bottom')}`;
 }
@@ -241,7 +250,7 @@ export function renderClaimPage(data: ClaimPageData): string {
 
   return `${renderHead(data)}
 <body>
-${renderNav()}
+${renderNav(`https://${data.trxHost}`)}
 ${renderHeader(data)}
 <div class="container">
 ${renderFlash(data)}

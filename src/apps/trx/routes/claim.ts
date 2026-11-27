@@ -28,6 +28,7 @@ import { strictSecurityMiddleware } from '../../../middleware/security';
 import { getSiteConfig } from '../../../lib/site-config';
 import type { Env } from '../../../env';
 import { computeStreak } from '../../../lib/streak';
+import { resolveTrxHost } from '../../../lib/trx-host';
 import { renderClaimPage, type PayoutRow } from './templates';
 
 export const claimRoutes = new Hono<{ Bindings: Env }>();
@@ -83,7 +84,8 @@ claimRoutes.get('/', async (c) => {
   if (!enabled) page = 'disabled';
   else if (!eligible) page = 'visit_later';
 
-  const refLink = `https://trx.hasit.in/?r=${address || 'YOUR_ADDRESS'}`;
+  const trxHost = resolveTrxHost(c.req.raw);
+  const refLink = `https://${trxHost}/?r=${address || 'YOUR_ADDRESS'}`;
 
   const recentPayouts = await trx.claimlog.recent(c.env.DB, 10);
   const payouts: PayoutRow[] = recentPayouts.results.map((row) => ({
@@ -120,7 +122,7 @@ claimRoutes.get('/', async (c) => {
     refUsers: settingsMap.get('ref_users') || '0',
     sessionToken,
     csrf,
-    trxHost: resolveTrxHost(c.req.raw),
+    trxHost,
     enabled,
     disallowEmail,
     streak: streak.streak,
@@ -275,15 +277,6 @@ claimRoutes.post(
 );
 
 // Helper functions
-const TRX_HOST_ALLOWLIST = new Set(['trx.hasit.in', 'trx2.hasit.in']);
-
-/** Resolve the public faucet host from the request, rejecting unknown hosts. */
-function resolveTrxHost(request: Request): string {
-  const raw = request.headers.get('Host') || request.headers.get('X-Hasit-Host') || '';
-  const hostname = raw.split(':')[0].trim().toLowerCase();
-  return TRX_HOST_ALLOWLIST.has(hostname) ? hostname : 'trx.hasit.in';
-}
-
 async function checkTimeLeft(
   db: D1Database,
   kind: 'ip' | 'address',

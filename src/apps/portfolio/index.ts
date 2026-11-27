@@ -8,6 +8,7 @@ import {
   renderAnalyticsTags,
 } from '../../lib/site-config';
 import { THEME_BOOTSTRAP, THEME_RUNTIME, renderThemeToggle } from '../../lib/theme';
+import { TRX_PUBLIC_ORIGIN } from '../../lib/trx-host';
 
 export const portfolioApp = new Hono<{ Bindings: Env }>();
 
@@ -31,7 +32,14 @@ portfolioApp.get('/', (c) => {
   <meta property="og:description" content="Staff Software Engineer at Uber building conversational AI. Open-source contributor to a 1.7k-star LLM router, and author of a philosophical novella.">
   <meta property="og:url" content="https://hasit.in/">
   <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Hasit Bhatt">
+  <meta property="og:image" content="https://hasit.in/og.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Hasit Bhatt - Observer · Thinker · Builder">
   <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://hasit.in/og.png">
+  <link rel="canonical" href="https://hasit.in/">
   ${renderAnalyticsTags(site)}
   ${renderAdsenseLoader(site)}
   <link rel="stylesheet" href="/theme.css">
@@ -52,7 +60,7 @@ portfolioApp.get('/', (c) => {
         <div class="nav-dropdown">
           <button class="nav-link nav-dropdown-trigger" aria-expanded="false" aria-haspopup="true">Apps ▾</button>
           <div class="nav-dropdown-menu" role="menu">
-            <a href="https://trx.hasit.in" class="nav-dropdown-item" role="menuitem"><span class="nav-dropdown-icon">💰</span><span>TRX Faucet</span></a>
+            <a href="${TRX_PUBLIC_ORIGIN}" class="nav-dropdown-item" role="menuitem"><span class="nav-dropdown-icon">💰</span><span>TRX Faucet</span></a>
             <a href="https://freellm.hasit.in" class="nav-dropdown-item" role="menuitem"><span class="nav-dropdown-icon">🔑</span><span>FreeLLM</span></a>
             <a href="https://fitness.hasit.in" class="nav-dropdown-item" role="menuitem"><span class="nav-dropdown-icon">💪</span><span>Fitness</span></a>
             <a href="https://quizify.hasit.in" class="nav-dropdown-item" role="menuitem"><span class="nav-dropdown-icon">⚡</span><span>Quizify</span></a>
@@ -241,11 +249,11 @@ portfolioApp.get('/', (c) => {
             </div>
           </div>
 
-          <div class="project-card" onclick="window.location.href='https://trx.hasit.in'">
+          <div class="project-card" onclick="window.location.href='${TRX_PUBLIC_ORIGIN}'">
             <div class="project-icon" aria-hidden="true">💰</div>
             <h3>TRX Faucet</h3>
             <p>Free TRX faucet with instant FaucetPay payouts. Memory game verification, referral program, and daily claims.</p>
-            <a href="https://trx.hasit.in" class="project-link" onclick="event.stopPropagation()">Claim TRX →</a>
+            <a href="${TRX_PUBLIC_ORIGIN}" class="project-link" onclick="event.stopPropagation()">Claim TRX →</a>
           </div>
         </div>
       </div>

@@ -38,37 +38,47 @@ interface FooterLink {
 
 /**
  * Extra footer links shown on the old VPS faucet page.
+ *
+ * The Facebook share link is built from the request host at render time, so it
+ * points at whichever faucet host the visitor is actually on.
  */
-const FOOTER_LINKS: readonly FooterLink[] = [
-  {
-    label: 'Click this link for more crypto faucets',
-    href: 'https://faucetlist.top/?r=TT7ZHznpSW3qjGwNaQWcshzcwQihhxGS6J&order=e',
-  },
-  {
-    label: 'Share on Facebook',
-    href: 'https://www.facebook.com/sharer/sharer.php?u=https://trx.hasit.in',
-  },
-  { label: 'blog', href: 'https://blog.hasit.in/' },
-  { label: 'podcast', href: 'https://open.spotify.com/show/4ONLihbtq88dUDvTtGxT47' },
-  {
-    label: 'Faucet in a BOX Ultimate',
-    href: 'https://faucetlist.top/faucet-in-a-box-ultimate',
-  },
-];
+function footerLinks(faucetOrigin: string): FooterLink[] {
+  return [
+    {
+      label: 'Click this link for more crypto faucets',
+      href: 'https://faucetlist.top/?r=TT7ZHznpSW3qjGwNaQWcshzcwQihhxGS6J&order=e',
+    },
+    {
+      label: 'Share on Facebook',
+      href: `https://www.facebook.com/sharer/sharer.php?u=${faucetOrigin}`,
+    },
+    { label: 'blog', href: 'https://blog.hasit.in/' },
+    { label: 'podcast', href: 'https://open.spotify.com/show/4ONLihbtq88dUDvTtGxT47' },
+    {
+      label: 'Faucet in a BOX Ultimate',
+      href: 'https://faucetlist.top/faucet-in-a-box-ultimate',
+    },
+  ];
+}
 
 /**
  * Render the extra footer links as a centered paragraph.
+ *
+ * `faucetOrigin` is the host the visitor is actually on, so the Facebook share
+ * link points at this deployment rather than the legacy Pages app.
  *
  * Labels and hrefs are static/trusted constants, but they still go through
  * `escapeHtml` before interpolation so the markup stays safe by construction.
  * (Escaping `&` in query strings to `&amp;` is valid HTML and browsers decode
  * it back to `&` when following the link.)
  */
-export function renderFaucetFooterLinks(): string {
-  const links = FOOTER_LINKS.map(
-    ({ label, href }) =>
-      `<a href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer">${escapeHtml(label)}</a>`,
-  ).join(' · ');
+export function renderFaucetFooterLinks(faucetOrigin: string): string {
+  const links = footerLinks(faucetOrigin)
+    .map(
+      ({ label, href }) =>
+        `<a href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer">${escapeHtml(label)}</a>`,
+    )
+    .join(' · ');
 
   return `<p class="faucet-footer-links text-center">${links}</p>`;
 }
