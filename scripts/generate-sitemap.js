@@ -16,10 +16,6 @@ const SUBDOMAINS = [
   { subdomain: 'trx', name: 'TRX Faucet', paths: ['/', '/claim', '/admin', '/p'] },
   { subdomain: 'trx2', name: 'TRX Faucet v2', paths: ['/', '/claim', '/admin', '/p'] },
   { subdomain: 'freellm', name: 'FreeLLM', paths: ['/', '/chat', '/keys', '/models', '/settings'] },
-  { subdomain: 'fitness', name: 'Fitness', paths: ['/', '/workouts', '/food', '/progress', '/quiz', '/today', '/login'] },
-  { subdomain: 'finance', name: 'Finance', paths: ['/', '/s'] },
-  { subdomain: 'quiz', name: 'Quiz (MindVault)', paths: ['/'] },
-  { subdomain: 'games', name: 'Games', paths: ['/'] },
   { subdomain: 'auth', name: 'Auth', paths: ['/', '/login', '/callback'] },
   { subdomain: '', name: 'Portfolio', paths: ['/'] },
 ];

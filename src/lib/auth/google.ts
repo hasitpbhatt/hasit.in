@@ -2,11 +2,7 @@ import type { Env } from '../../env';
 
 export const SCOPES = {
   freellm: 'openid email profile',
-  fitness: 'openid email profile https://www.googleapis.com/auth/fitness.activity.read',
-  finance: 'openid email profile',
-  quiz: 'openid email profile',
   blog: 'openid email profile',
-  games: 'openid email profile',
   trx: 'openid email profile',
   default: 'openid email profile',
 } as const;

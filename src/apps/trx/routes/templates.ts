@@ -55,9 +55,6 @@ function renderNav(): string {
           <a href="https://trx.hasit.in" class="nav-dropdown-item" role="menuitem"><span class="nav-dropdown-icon">💰</span><span>TRX Faucet</span></a>
           <a href="https://freellm.hasit.in" class="nav-dropdown-item" role="menuitem"><span class="nav-dropdown-icon">🔑</span><span>FreeLLM</span></a>
           <a href="https://fitness.hasit.in" class="nav-dropdown-item" role="menuitem"><span class="nav-dropdown-icon">💪</span><span>Fitness</span></a>
-          <a href="https://finance.hasit.in" class="nav-dropdown-item" role="menuitem"><span class="nav-dropdown-icon">📊</span><span>Finance</span></a>
-          <a href="https://games.hasit.in" class="nav-dropdown-item" role="menuitem"><span class="nav-dropdown-icon">🎮</span><span>Games</span></a>
-          <a href="https://quiz.hasit.in" class="nav-dropdown-item" role="menuitem"><span class="nav-dropdown-icon">📚</span><span>Quiz</span></a>
           <a href="https://quizify.hasit.in" class="nav-dropdown-item" role="menuitem"><span class="nav-dropdown-icon">⚡</span><span>Quizify</span></a>
           <a href="https://airgap.hasit.in" class="nav-dropdown-item" role="menuitem"><span class="nav-dropdown-icon">🛡️</span><span>Airgap</span></a>
           <a href="https://devcheap.click" class="nav-dropdown-item" role="menuitem"><span class="nav-dropdown-icon">💰</span><span>DevCheap</span></a>

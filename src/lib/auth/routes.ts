@@ -13,7 +13,7 @@ import type { Env } from '../../env';
 
 export const authRoutes = new Hono<{ Bindings: Env }>();
 
-const VALID_APPS = ['freellm', 'fitness', 'finance', 'quiz', 'blog', 'games', 'trx'] as const;
+const VALID_APPS = ['freellm', 'fitness', 'blog', 'trx', 'quizify'] as const;
 type ValidApp = typeof VALID_APPS[number];
 
 const AUTH_STATE_OBJECT = 'oauth-state';

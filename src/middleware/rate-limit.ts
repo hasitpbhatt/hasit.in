@@ -13,11 +13,7 @@ interface RateLimitConfig {
 const RATE_LIMITS: Record<string, RateLimitConfig> = {
   trx: { windowMs: 60_000, maxRequests: 10, keyPrefix: 'rl:trx' },        // 10/min for faucet claims
   freellm: { windowMs: 60_000, maxRequests: 30, keyPrefix: 'rl:freellm' }, // 30/min for validations
-  fitness: { windowMs: 60_000, maxRequests: 20, keyPrefix: 'rl:fitness' },
-  finance: { windowMs: 60_000, maxRequests: 30, keyPrefix: 'rl:finance' },
   blog: { windowMs: 60_000, maxRequests: 60, keyPrefix: 'rl:blog' },
-  quiz: { windowMs: 60_000, maxRequests: 20, keyPrefix: 'rl:quiz' },
-  games: { windowMs: 60_000, maxRequests: 30, keyPrefix: 'rl:games' },
   default: { windowMs: 60_000, maxRequests: 60, keyPrefix: 'rl:default' },
 };
 

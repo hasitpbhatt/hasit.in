@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { spawnSync } from 'node:child_process';
-import { access, cp, mkdir, rm, writeFile } from 'node:fs/promises';
+import { access, mkdir, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -50,24 +50,6 @@ async function resetOutput(appName) {
   return output;
 }
 
-async function buildGames() {
-  const appRoot = path.join(appsRoot, 'games');
-  const output = await resetOutput('games');
-  await installIfNeeded(appRoot);
-  runNpm(appRoot, ['run', 'typecheck']);
-  runNpm(appRoot, [
-    'exec',
-    '--',
-    'vite',
-    'build',
-    '--base',
-    '/',
-    '--outDir',
-    path.relative(appRoot, output),
-    '--emptyOutDir',
-  ]);
-}
-
 async function buildFreeLlm() {
   const appRoot = path.join(appsRoot, 'freellm');
   const output = await resetOutput('freellm');
@@ -86,29 +68,6 @@ async function buildFreeLlm() {
   ]);
 }
 
-async function buildFitness() {
-  const appRoot = path.join(appsRoot, 'fitness');
-  const output = await resetOutput('fitness');
-  await installIfNeeded(appRoot);
-  runNpm(appRoot, ['run', 'build']);
-  await cp(path.join(appRoot, 'out'), output, { recursive: true });
-}
-
-async function copyFinance() {
-  const source = path.join(appsRoot, 'finance', 'public');
-  const output = await resetOutput('finance');
-  await cp(source, output, { recursive: true });
-}
-
-async function copyQuiz() {
-  const source = path.join(appsRoot, 'quiz', 'quiz');
-  const output = await resetOutput('quiz');
-  await cp(source, output, {
-    recursive: true,
-    filter: (entry) => !/(^|[\\/])(tests|scripts|proxy)([\\/]|$)/.test(entry),
-  });
-}
-
 function generateSitemap() {
   const BASE_URL = 'https://hasit.in';
   const SUBDOMAINS = [
@@ -116,10 +75,6 @@ function generateSitemap() {
     { subdomain: 'trx', paths: ['/', '/claim', '/admin', '/p'] },
     { subdomain: 'trx2', paths: ['/', '/claim', '/admin', '/p'] },
     { subdomain: 'freellm', paths: ['/', '/chat', '/keys', '/models', '/settings'] },
-    { subdomain: 'fitness', paths: ['/', '/workouts', '/food', '/progress', '/quiz', '/today', '/login'] },
-    { subdomain: 'finance', paths: ['/', '/s'] },
-    { subdomain: 'quiz', paths: ['/'] },
-    { subdomain: 'games', paths: ['/'] },
     { subdomain: 'auth', paths: ['/', '/login', '/callback'] },
     { subdomain: '', paths: ['/'] },
   ];
@@ -153,10 +108,6 @@ ${urlEntries}
 async function buildApps() {
   await mkdir(outputRoot, { recursive: true });
   await buildFreeLlm();
-  await buildGames();
-  await buildFitness();
-  await copyFinance();
-  await copyQuiz();
 
   // Generate sitemap.xml
   const sitemap = generateSitemap();

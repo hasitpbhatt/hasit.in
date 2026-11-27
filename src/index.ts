@@ -4,13 +4,9 @@ import type { Env } from './env';
 import { trxApp } from './apps/trx';
 import { portfolioApp } from './apps/portfolio';
 import { freellmApp } from './apps/freellm';
-import { fitnessApp } from './apps/fitness';
-import { financeApp } from './apps/finance';
 import { blogApp } from './apps/blog';
-import { quizApp } from './apps/quiz';
-import { gamesApp } from './apps/games';
 import { authRoutes } from './lib/auth/routes';
-import { isLocalHostname, resolveAppKey, resolvePathMount, resolveSpaAssetPaths, type AppKey } from './lib/host-routing';
+import { isLocalHostname, resolveAppKey, resolveSpaAssetPaths, type AppKey } from './lib/host-routing';
 import { securityHeadersMiddleware } from './middleware/security-headers';
 
 type AppEnv = { Bindings: Env };
@@ -20,11 +16,7 @@ const APP_ROUTES: Record<string, Hono<AppEnv>> = {
   trx: trxApp,
   trx2: trxApp,
   freellm: freellmApp,
-  fitness: fitnessApp,
-  finance: financeApp,
   blog: blogApp,
-  quiz: quizApp,
-  games: gamesApp,
   auth: authRoutes,
   '': portfolioApp,
 };
@@ -86,18 +78,12 @@ app.all('*', async (c) => {
     return authRoutes.fetch(forwarded, env, c.executionCtx);
   }
 
-  // The quiz zone rewrites quiz.hasit.in/<path> to hasit.in/quiz/<path>, so the
-  // Worker sees the root host. Recover the original app and path before routing
-  // so both the SPA shell and the /api/ai endpoint keep working.
-  const pathMount = resolvePathMount(effectiveHostname, url.pathname);
-
   const appKey =
       devApp !== null && devApp in APP_ROUTES
         ? devApp
-        : pathMount?.appKey ?? resolveAppKey(effectiveHostname, local);
+        : resolveAppKey(effectiveHostname, local);
 
-  // Paths are matched against the browser-facing path, minus any mount prefix.
-  const pathname = pathMount ? pathMount.pathname : url.pathname;
+  const pathname = url.pathname;
 
   const isPageRequest = request.method === 'GET' || request.method === 'HEAD';
   if (isPageRequest && !isApiPath(pathname)) {
@@ -124,13 +110,7 @@ app.all('*', async (c) => {
   headers.set('X-Hasit-Host', effectiveHostname);
   headers.set('X-Hasit-App', appKey);
 
-  const appRequest = pathMount
-    ? new Request(new URL(pathname + url.search, url), {
-        method: request.method,
-        headers,
-        body: request.body,
-      })
-    : new Request(request, { headers });
+  const appRequest = new Request(request, { headers });
 
   const response = await subApp.fetch(appRequest, env, c.executionCtx);
 

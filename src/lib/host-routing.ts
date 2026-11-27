@@ -9,11 +9,7 @@ export type AppKey =
   | ''
   | 'trx'
   | 'freellm'
-  | 'fitness'
-  | 'finance'
   | 'blog'
-  | 'quiz'
-  | 'games'
   | 'auth';
 
 /** Subdomains that map to an app key. Everything else falls back to portfolio. */
@@ -21,11 +17,7 @@ const SUBDOMAIN_APPS: Record<string, AppKey> = {
   trx: 'trx',
   trx2: 'trx',
   freellm: 'freellm',
-  fitness: 'fitness',
-  finance: 'finance',
   blog: 'blog',
-  quiz: 'quiz',
-  games: 'games',
   auth: 'auth',
 };
 
@@ -35,13 +27,7 @@ const ROOT_DOMAIN = 'hasit.in';
 // rewritten to these paths by the Worker so /apps/... is never public.
 const SPA_ASSET_ROOTS: Partial<Record<AppKey, string>> = {
   freellm: '/_spa/freellm/',
-  fitness: '/_spa/fitness/',
-  finance: '/_spa/finance/',
-  quiz: '/_spa/quiz/',
-  games: '/_spa/games/',
 };
-
-const FITNESS_LOCALES = ['gu', 'en', 'hi'] as const;
 
 export function getSpaAssetRoot(appKey: AppKey): string | null {
   return SPA_ASSET_ROOTS[appKey] ?? null;
@@ -66,55 +52,7 @@ export function resolveSpaAssetPaths(appKey: AppKey, pathname: string): string[]
   const path = normalizePath(pathname);
   if (isStaticAssetPath(path)) return [`${root}${path.slice(1)}`];
 
-  if (appKey === 'fitness') {
-    if (path === '/') {
-      return FITNESS_LOCALES.map((locale) => `${root}${locale}/index.html`);
-    }
-
-    const segments = path.slice(1).split('/').filter(Boolean);
-    if (FITNESS_LOCALES.includes(segments[0] as (typeof FITNESS_LOCALES)[number])) {
-      const rest = segments.slice(1).join('/');
-      return [rest ? `${root}${segments[0]}/${rest}/index.html` : `${root}${segments[0]}/index.html`];
-    }
-
-    return FITNESS_LOCALES.flatMap((locale) => [
-      `${root}${locale}${path}/index.html`,
-      `${root}${locale}${path}.html`,
-    ]);
-  }
-
   return [`${root}index.html`];
-}
-
-/**
- * Apps that are also reachable under /<app>/ on the root domain.
- *
- * The quiz zone has a URL rewrite rule that maps quiz.hasit.in/<path> to
- * hasit.in/quiz/<path> before the Worker runs, so those requests arrive on the
- * root hostname and would otherwise be routed to the portfolio. Mounting the
- * app at its own prefix recovers the original request.
- */
-const PATH_MOUNTED_APPS: Record<string, AppKey> = {
-  quiz: 'quiz',
-};
-
-/**
- * Detect a path-mounted app on the root domain and strip the mount prefix.
- * Returns null when the host or first segment is not a mount point.
- */
-export function resolvePathMount(
-  hostname: string,
-  pathname: string,
-): { appKey: AppKey; pathname: string } | null {
-  const h = hostname.toLowerCase().replace(/:\d+$/, '');
-  if (h !== ROOT_DOMAIN && h !== `www.${ROOT_DOMAIN}`) return null;
-
-  const segment = pathname.split('/').filter(Boolean)[0];
-  const appKey = segment ? PATH_MOUNTED_APPS[segment] : undefined;
-  if (!appKey) return null;
-
-  const rest = pathname.slice(segment.length + 1);
-  return { appKey, pathname: rest.startsWith('/') ? rest : `/${rest}` };
 }
 
 /** True for localhost / loopback hostnames. */
@@ -143,7 +81,7 @@ export function isKnownSubdomain(hostname: string): boolean {
  * portfolio. On localhost we default to the TRX faucet so a single origin can
  * exercise the whole surface (plan.md Phase 4 endpoint table).
  *
- * However, if the Host header indicates a known subdomain (e.g., quiz.hasit.in),
+ * However, if the Host header indicates a known subdomain (e.g., freellm.hasit.in),
  * we route to that app regardless of local vs production.
  */
 export function resolveAppKey(hostname: string, local = isLocalHostname(hostname)): AppKey {
